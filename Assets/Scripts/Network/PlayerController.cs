@@ -27,9 +27,6 @@ public class PlayerController : NetworkBehaviour
 	/// <summary> 予約コマンド </summary>
 	private CommandData m_PendingCommand;
 
-	/// <summary> 同期更新コルーチン </summary>
-	private Coroutine m_SyncUpdateCoroutine = null;
-
 	/// <summary>
 	/// 生成
 	/// </summary>
@@ -152,10 +149,6 @@ public class PlayerController : NetworkBehaviour
 				// ゲーム更新
 			}
 		}
-
-		yield return null;
-
-		m_SyncUpdateCoroutine = StartCoroutine(SyncUpdate());
 	}
 
 	/// <summary>
