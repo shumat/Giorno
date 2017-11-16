@@ -17,13 +17,14 @@ public class TRPlayer : PlayerBase
 	/// <summary> テトロミノ移動先 </summary>
 	private Vector3 m_TetrominoTarget = Vector3.zero;
 
+	public GameObject PlayAreaTemplate; // TODO: AssetBundle
 
 	/// <summary>
 	/// 生成
 	/// </summary>
 	protected void Awake()
 	{
-		m_PlayArea = FindObjectOfType<TRPlayArea>();
+		m_PlayArea = Instantiate(PlayAreaTemplate).GetComponent<TRPlayArea>();
 	}
 
 	/// <summary>
@@ -33,7 +34,6 @@ public class TRPlayer : PlayerBase
 	{
 		base.Initialize();
 		m_PlayArea.Initialize();
-
 		m_PlayArea.BeginProcess();
 	}
 
@@ -124,6 +124,24 @@ public class TRPlayer : PlayerBase
 		{
 			m_PlayArea.RotateTetromino(true);
 		}
+	}
+
+	/// <summary>
+	/// フレーム更新
+	/// </summary>
+	public override void StepUpdate()
+	{
+		base.StepUpdate();
+		m_PlayArea.StepUpdate();
+	}
+
+	/// <summary>
+	/// 一時停止
+	/// </summary>
+	public override void SetPause(bool pause)
+	{
+		base.SetPause(pause);
+		m_PlayArea.SetPause(pause);
 	}
 
 	/// <summary>

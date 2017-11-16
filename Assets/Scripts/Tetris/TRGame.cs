@@ -14,6 +14,8 @@ public class TRGame : GameBase
 	/// <summary> プレイヤー </summary>
 	private TRPlayer m_Player = null;
 
+	public GameObject PlayerTemplate; // TODO: AssetBundle
+
 	/// <summary>
 	/// 生成
 	/// </summary>
@@ -41,9 +43,7 @@ public class TRGame : GameBase
 	/// </summary>
 	private IEnumerator InitGame()
 	{
-		GameObject obj = new GameObject();
-		m_Player = obj.AddComponent<TRPlayer>();
-		m_Player.name = "Player";
+		m_Player = Instantiate(PlayerTemplate).GetComponent<TRPlayer>();
 		m_Player.Initialize();
 
 		yield return null;
@@ -55,7 +55,7 @@ public class TRGame : GameBase
 	/// </summary>
 	private IEnumerator GameLoop()
 	{
-		m_Player.Play();
+		m_Player.Process();
 
 		yield return null;
 

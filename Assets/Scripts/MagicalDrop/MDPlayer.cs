@@ -27,9 +27,6 @@ public class MDPlayer : PlayerBase
 	/// <summary> スプライトレンダラ </summary>
 	private SpriteRenderer m_SpriteRenderer = null;
 
-	/// <summary> 一時停止 </summary>
-	private bool m_IsPause = false;
-
 	/// <summary> キャラクター </summary>
 	private Character m_Character = null;
 
@@ -124,7 +121,7 @@ public class MDPlayer : PlayerBase
 	/// <summary>
 	/// ポーズ中
 	/// </summary>
-	public void OnPause()
+	public override void OnPause()
 	{
 	}
 
@@ -196,13 +193,5 @@ public class MDPlayer : PlayerBase
 			"IsValidPull " + m_PlayArea.IsValidPull(m_CurrentRow) + "\n" +
 			"PulledDropCount " + m_PlayArea.GetPulledDropCount() + "\n" +
 			"PushingDropCount " + m_PlayArea.GetPushingDropCount() , style);
-	}
-
-	/// <summary>
-	/// ポーズ中?
-	/// </summary>
-	public bool IsPause
-	{
-		get { return m_IsPause; }
 	}
 }

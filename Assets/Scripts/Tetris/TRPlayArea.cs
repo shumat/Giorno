@@ -12,6 +12,9 @@ public class TRPlayArea : MonoBehaviour
 	/// <summary> サイズ </summary>
 	private Vector3 m_Size = Vector2.zero;
 
+	/// <summary> メイン処理コルーチン </summary>
+	private IEnumerator m_MainCoroutine = null;
+
 	/// <summary> ライン </summary>
 	private List<TRPanelBlock[]> m_Lines = new List<TRPanelBlock[]>();
 
@@ -105,7 +108,11 @@ public class TRPlayArea : MonoBehaviour
 	/// </summary>
 	public void BeginProcess()
 	{
-		StartCoroutine(Process());
+		if (m_MainCoroutine == null)
+		{
+			m_MainCoroutine = Process();
+			StartCoroutine(m_MainCoroutine);
+		}
 	}
 
 	/// <summary>
@@ -128,6 +135,11 @@ public class TRPlayArea : MonoBehaviour
 			if (m_TetrominoAttachWaitTime < 0)
 			{
 				AttachTetromino();
+
+				if (!CreateNewTetromino())
+				{
+					Debug.Log("Over");
+				}
 			}
 		}
 
@@ -140,7 +152,38 @@ public class TRPlayArea : MonoBehaviour
 		// 1フレーム待機
 		yield return null;
 
-		StartCoroutine(Process());
+		m_MainCoroutine = Process();
+		StartCoroutine(m_MainCoroutine);
+	}
+
+	/// <summary>
+	/// ステップ実行
+	/// </summary>
+	public void StepUpdate()
+	{
+		if (m_MainCoroutine != null)
+		{
+			StartCoroutine(m_MainCoroutine);
+			StopCoroutine(m_MainCoroutine);
+		}
+	}
+
+	/// <summary>
+	/// 一時停止
+	/// </summary>
+	public void SetPause(bool pause)
+	{
+		if (m_MainCoroutine != null)
+		{
+			if (pause)
+			{
+				StopCoroutine(m_MainCoroutine);
+			}
+			else
+			{
+				StartCoroutine(m_MainCoroutine);
+			}
+		}
 	}
 
 	#region Tetromino
@@ -148,7 +191,7 @@ public class TRPlayArea : MonoBehaviour
 	/// <summary>
 	/// テトロミノ新規作成
 	/// </summary>
-	public void CreateNewTetromino()
+	public bool CreateNewTetromino()
 	{
 		// 初期化
 		m_Tetromino.Initialize(GetNextTetromino());
@@ -160,11 +203,11 @@ public class TRPlayArea : MonoBehaviour
 
 		ResetDownLineWait();
 		ResetTetrominoAttachWait();
-		
-		// 姿勢更新
-		UpdateTetromino();
 
 		TRGame.Player.NewTetrominoCreateEvent();
+
+		// 姿勢更新
+		return UpdateTetromino();
 	}
 
 	/// <summary>
@@ -285,8 +328,6 @@ public class TRPlayArea : MonoBehaviour
 			}
 		}
 		m_TetrominoParts.Clear();
-
-		CreateNewTetromino();
 	}
 
 	/// <summary>
