@@ -17,6 +17,9 @@ public class MatchingManager : MonoBehaviour
 	/// <summary> マッチングコルーチン </summary>
 	private IEnumerator m_MatchingCoroutine = null;
 
+	/// <summary> デフォルトポート番号 </summary>
+	private int m_DefaultNetworkPort = 0;
+
 	/// <summary>
 	/// 生成
 	/// </summary>
@@ -24,6 +27,14 @@ public class MatchingManager : MonoBehaviour
 	{
 		m_Menu = GameObject.Find("MatchingCanvas").transform.Find("Menu").GetComponent<ObjectSelector>();
 		m_UseLocalNetwork = m_Menu.transform.Find("GameMode/UseLan").GetComponent<Toggle>().isOn;
+	}
+
+	/// <summary>
+	/// 開始
+	/// </summary>
+	protected void Start()
+	{
+		m_DefaultNetworkPort = NetworkGameManager.Instance.networkPort;
 	}
 
 	/// <summary>
@@ -87,6 +98,8 @@ public class MatchingManager : MonoBehaviour
 		Debug.Log("Start local match");
 
 		NetworkGameManager nm = NetworkGameManager.Instance;
+
+		nm.networkPort = m_DefaultNetworkPort;
 
 		// クライアントとして開始
 		nm.StartClient();
@@ -153,6 +166,7 @@ public class MatchingManager : MonoBehaviour
 	/// </summary>
 	public void StartOffline()
 	{
+		NetworkGameManager.Instance.networkPort = 0;
 		NetworkGameManager.Instance.StartHost();
 
 		m_Menu.Select(null);

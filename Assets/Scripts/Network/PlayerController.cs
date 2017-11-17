@@ -41,10 +41,7 @@ public class PlayerController : NetworkBehaviour
 	/// </summary>
 	protected void Update()
 	{
-		//if (NetworkGameManager.Instance.PlayerCount >= 2)
-		//{
-		//	SyncUpdate();
-		//}
+		SyncUpdate();
 	}
 
 	/// <summary>
@@ -84,23 +81,23 @@ public class PlayerController : NetworkBehaviour
 		// 相手側の更新(同期待ちする)
 		else
 		{
-			// フレーム更新
-			while (NetworkGameManager.Instance.IsReadyUpdate(m_GlobalFrameCount))
-			{
-				// 古いデータを消す
-				for (int i = 0; i < m_Commands.Count; i++)
-				{
-					if (m_Commands[i].frame < m_GlobalFrameCount)
-					{
-						m_Commands.RemoveAt(i--);
-					}
-				}
+			//// フレーム更新
+			//while (NetworkGameManager.Instance.IsReadyUpdate(m_GlobalFrameCount))
+			//{
+			//	// 古いデータを消す
+			//	for (int i = 0; i < m_Commands.Count; i++)
+			//	{
+			//		if (m_Commands[i].frame < m_GlobalFrameCount)
+			//		{
+			//			m_Commands.RemoveAt(i--);
+			//		}
+			//	}
 
-				// コマンド実行
-				ExecuteCommand(++m_GlobalFrameCount);
+			//	// コマンド実行
+			//	ExecuteCommand(++m_GlobalFrameCount);
 
-				// ゲーム更新
-			}
+			//	// ゲーム更新
+			//}
 		}
 	}
 
