@@ -6,31 +6,32 @@ public class DebugModeSelect : MonoBehaviour
 {
 	[SerializeField]
 	public Character m_Character = null;
-	GameBase.GameMode m_GameMode = GameBase.GameMode.None;
 
 	private void Start()
 	{
 		//m_Character.Visible = true;
 	}
 
-	public GameBase.GameMode Mode
+	private void StartGame(GameBase.GameMode gameMode)
 	{
-		get { return m_GameMode; }
+		GameManager.Instance.RequestUnloadScene("DebugModeSelect");
+		GameManager.Instance.RequestAddScene(gameMode.ToString(), true);
+		GameManager.Instance.ApplySceneRequests();
 	}
 
 	public void StartPanelDePON()
 	{
-		m_GameMode = GameBase.GameMode.PanelDePon;
+		StartGame(GameBase.GameMode.PanelDePon);
 	}
 
 	public void StartMagicalDrop()
 	{
-		m_GameMode = GameBase.GameMode.MagicalDrop;
+		StartGame(GameBase.GameMode.MagicalDrop);
 	}
 
 	public void StartTetris()
 	{
-		m_GameMode = GameBase.GameMode.Tetris;
+		StartGame(GameBase.GameMode.Tetris);
 	}
 
 	public void SetCharacter(int id)

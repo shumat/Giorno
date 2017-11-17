@@ -41,10 +41,10 @@ public class PlayerController : NetworkBehaviour
 	/// </summary>
 	protected void Update()
 	{
-		if (NetworkGameManager.Instance.PlayerCount >= 2)
-		{
-			SyncUpdate();
-		}
+		//if (NetworkGameManager.Instance.PlayerCount >= 2)
+		//{
+		//	SyncUpdate();
+		//}
 	}
 
 	/// <summary>
@@ -52,53 +52,6 @@ public class PlayerController : NetworkBehaviour
 	/// </summary>
 	private void SyncUpdate()
 	{
-		// 双方向同期
-		/*
-		if (isLocalPlayer)
-		{
-			CommandData command = new CommandData();
-
-			// コマンド
-			if (Input.GetMouseButton(0))
-			{
-				command.type = 1;
-				command.value = 5;
-			}
-
-			// フレーム更新
-			if (NetworkGameManager.Instance.IsReadyUpdate(m_FrameCount))
-			{
-				// 古いデータを消す
-				for (int i = 0; i < m_Commands.Count; i++)
-				{
-					if (m_Commands[i].frame < m_FrameCount)
-					{
-						m_Commands.RemoveAt(i--);
-					}
-				}
-
-				// 予約コマンドを適用
-				if (command.type == 0 && m_PendingCommand.type != 0)
-				{
-					command = m_PendingCommand;
-				}
-
-				// コマンド送信
-				SendCommand(command, ++m_FrameCount);
-			}
-			// 更新待機中
-			else
-			{
-				// 最後のコマンドを保持
-				if (command.type != 0)
-				{
-					m_PendingCommand = command;
-					m_PendingCommand.type = 0;
-				}
-			}
-		}
-		*/
-		
 		// 自身の更新
 		if (isLocalPlayer)
 		{

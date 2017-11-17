@@ -2,112 +2,42 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.Networking.Match;
 
-public class NetworkGameManager : MonoBehaviour
+public class NetworkGameManager : NetworkManager
 {
-	private static NetworkGameManager m_Instance = null;
+	#region Player
 
-	private NetworkManager m_NetworkManager = null;
-
-	private MatchingManager m_MatchingManager = null;
-
+	/// <summary> プレイヤー </summary>
 	private List<PlayerController> m_Players = new List<PlayerController>();
 
-	protected void Awake()
-	{
-		if (m_Instance != null)
-		{
-			Destroy(m_Instance);
-		}
-		m_Instance = this;
+	/// <summary> ローカルプレイヤー </summary>
+	public PlayerController LocalPlayer { get; private set; }
 
-		m_NetworkManager = GetComponent<NetworkManager>();
-
-		m_MatchingManager = new MatchingManager();
-		m_MatchingManager.SetNetworkManager(m_NetworkManager);
-	}
-
+	/// <summary>
+	/// プレイヤー追加
+	/// </summary>
 	public void AddPlayerController(PlayerController pc)
 	{
 		m_Players.Add(pc);
+
+		if (pc.isLocalPlayer)
+		{
+			LocalPlayer = pc;
+		}
 	}
 
-	private void MatchEnd()
+	/// <summary>
+	/// プレイヤー破棄
+	/// </summary>
+	public void ReleasePlayer()
 	{
 		m_Players.Clear();
 	}
 
-	private void OnGUI()
-	{
-		bool isLocalHost = NetworkServer.active && NetworkClient.active;
-		bool isLocalClient = !NetworkServer.active && NetworkClient.active;
-
-		int width = 200;
-		int height = 30;
-		int y = 0;
-
-		if (!isLocalClient)
-		{
-			if (GUI.Button(new Rect(0, y++ * height, width, height), isLocalHost ? "Stop Host" : "Start Host"))
-			{
-				if (isLocalHost)
-				{
-					MatchEnd();
-					m_MatchingManager.StopHost();
-				}
-				else
-				{
-					m_MatchingManager.StartHost();
-				}
-			}
-		}
-		if (!isLocalHost)
-		{
-			if (GUI.Button(new Rect(0, y++ * height, width, height), isLocalClient ? "Stop Client" : "StartClient"))
-			{
-				if (isLocalClient)
-				{
-					MatchEnd();
-					m_MatchingManager.StopClient();
-				}
-				else
-				{
-					m_MatchingManager.StartClient();
-				}
-			}
-		}
-		
-		if (GUI.Button(new Rect(0, y++ * height, width, height), "StartMatchMaker"))
-		{
-			m_MatchingManager.StartMatchMaker();
-		}
-		
-		if (GUI.Button(new Rect(0, y++ * height, width, height), "DisableMatchMaker"))
-		{
-			m_MatchingManager.DisableMatchMaker();
-		}
-		
-		if (GUI.Button(new Rect(0, y++ * height, width, height), "CreateMatch"))
-		{
-			m_MatchingManager.CreateMatch();
-		}
-
-		if (GUI.Button(new Rect(0, y++ * height, width, height), "DestroyMatch"))
-		{
-			m_MatchingManager.DestroyMatch();
-		}
-		
-		if (GUI.Button(new Rect(0, y++ * height, width, height), "FindMatch"))
-		{
-			m_MatchingManager.FindMatch();
-		}
-
-		if (GUI.Button(new Rect(0, y++ * height, width, height), "JoinMatch"))
-		{
-			m_MatchingManager.JoinMatch();
-		}
-	}
-
+	/// <summary>
+	/// 更新可能?
+	/// </summary>
 	public bool IsReadyUpdate(uint frame)
 	{
 		foreach (PlayerController player in m_Players)
@@ -120,18 +50,228 @@ public class NetworkGameManager : MonoBehaviour
 		return true;
 	}
 
+	/// <summary>
+	/// 全プレイヤー取得
+	/// </summary>
 	public PlayerController[] GetPlayers()
 	{
 		return m_Players.ToArray();
 	}
 
+	/// <summary>
+	/// プレイヤー数
+	/// </summary>
 	public int PlayerCount
 	{
 		get { return m_Players.Count; }
 	}
 
+	#endregion
+
+	#region Matching
+
+	/// <summary> ルーム作成した? </summary>
+	public bool IsCreatedMatch { get; private set; }
+
+	/// <summary> ルーム参加した? </summary>
+	public bool IsJoinedMatch { get; private set; }
+
+	/// <summary>
+	/// ローカルマッチ停止
+	/// </summary>
+	public void StopLocalMatch()
+	{
+		if (NetworkServer.active && NetworkClient.active)
+		{
+			StopHost();
+		}
+		if (!NetworkServer.active && NetworkClient.active)
+		{
+			StopClient();
+		}
+
+		ReleasePlayer();
+	}
+
+	/// <summary>
+	/// マッチングメーカー無効化
+	/// </summary>
+	public void DisableMatchMaker()
+	{
+		if (matchMaker != null)
+		{
+			StopMatchMaker();
+			Debug.Log("StopMatchMaker");
+		}
+	}
+
+	/// <summary>
+	/// ルーム作成
+	/// </summary>
+	public Coroutine CreateMatch()
+	{
+		if (!IsCreatedMatch && matchMaker != null && matchInfo == null && matches == null)
+		{
+			Debug.Log("CreateMatch");
+			System.DateTime now = System.DateTime.Now;
+			matchName = "RM" + now.Hour.ToString() + now.Minute.ToString() + now.Second.ToString();
+			return matchMaker.CreateMatch(matchName, matchSize, true, "", "", "", 0, 0, OnMatchCreate);
+		}
+		return null;
+	}
+
+	/// <summary>
+	/// ルーム作成通知
+	/// </summary>
+	public override void OnMatchCreate(bool success, string extendedInfo, UnityEngine.Networking.Match.MatchInfo match)
+	{
+		base.OnMatchCreate(success, extendedInfo, match);
+		IsCreatedMatch = success;
+	}
+
+	/// <summary>
+	/// ルーム解散
+	/// </summary>
+	public Coroutine DestroyMatch()
+	{
+		if (matchMaker != null && matchInfo != null)
+		{
+			Debug.Log("DestroyMatch");
+			ReleasePlayer();
+			IsCreatedMatch = false;
+			return matchMaker.DestroyMatch(matchInfo.networkId, matchInfo.domain, OnDestroyMatch);
+		}
+		return null;
+	}
+
+	/// <summary>
+	/// ルーム検索
+	/// </summary>
+	public Coroutine FindMatch()
+	{
+		if (matchMaker != null && matchInfo == null && matches == null)
+		{
+			Debug.Log("FindMatch");
+			return matchMaker.ListMatches(0, 20, "", false, 0, 0, OnMatchList);
+		}
+		return null;
+	}
+
+	/// <summary>
+	/// ルーム検索中止
+	/// </summary>
+	public void StopFindMatch()
+	{
+		matches = null;
+		Debug.Log("StopFindMatch");
+	}
+
+	/// <summary>
+	/// ルームインデックスリスト取得
+	/// </summary>
+	public int[] GetMatchIndices()
+	{
+		List<int> dest = new List<int>();
+		for (int i = 0; i < matches.Count; i++)
+		{
+			if (matches[i].currentSize > 0)
+			{
+				dest.Add(i);
+			}
+		}
+		return dest.ToArray();
+	}
+
+	/// <summary>
+	/// ルーム参加
+	/// </summary>
+	public Coroutine JoinMatch(int index = -1)
+	{
+		if (!IsJoinedMatch && matchMaker != null && matchInfo == null && matches != null)
+		{
+			if (index == -1)
+			{
+				int[] matches = GetMatchIndices();
+				if (matches.Length > 0)
+				{
+					index = matches[0];
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			if (matches.Count > index)
+			{
+				Debug.Log("JoinMatch");
+				matchName = matches[index].name;
+				matchSize = (uint)matches[index].maxSize;
+				return matchMaker.JoinMatch(matches[index].networkId, "", "", "", 0, 0, OnMatchJoined);
+			}
+		}
+		return null;
+	}
+
+	/// <summary>
+	/// ルーム参加通知
+	/// </summary>
+	public override void OnMatchJoined(bool success, string extendedInfo, MatchInfo match)
+	{
+		base.OnMatchJoined(success, extendedInfo, match);
+		IsJoinedMatch = success;
+	}
+
+	/// <summary>
+	/// ルーム退室
+	/// </summary>
+	public Coroutine DropMatch()
+	{
+		if (IsJoinedMatch && matchMaker != null && matchInfo != null)
+		{
+			ReleasePlayer();
+			IsJoinedMatch = false;
+			return matchMaker.DropConnection(matchInfo.networkId, matchInfo.nodeId, 0, null);
+		}
+		return null;
+	}
+
+	/// <summary>
+	/// マッチ完了?
+	/// </summary>
+	public bool IsMatchComplete
+	{
+		get { return matchSize == PlayerCount; }
+	}
+
+	/// <summary>
+	/// オフライン?
+	/// </summary>
+	public bool IsOffline
+	{
+		get { return !NetworkServer.active && !NetworkClient.active && matchMaker == null; }
+	}
+
+	#endregion
+
+	private void OnGUI()
+	{
+		GUIStyle style = new GUIStyle();
+		GUIStyleState styleState = new GUIStyleState();
+		styleState.textColor = Color.white;
+		style.fontSize = 50;
+		style.normal = styleState;
+
+		string log = "";
+		log += "PlayerCount: " + PlayerCount.ToString() + "\n";
+		GUI.Label(new Rect(0, 0, Screen.width, Screen.height), log, style);
+	}
+
+	/// <summary>
+	/// インスタンス
+	/// </summary>
 	public static NetworkGameManager Instance
 	{
-		get { return m_Instance; }
+		get { return singleton as NetworkGameManager; }
 	}
 }

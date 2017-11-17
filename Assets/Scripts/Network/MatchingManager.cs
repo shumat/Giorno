@@ -1,209 +1,197 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.Networking;
 
-public class MatchingManager
+public class MatchingManager : MonoBehaviour
 {
-	/// <summary>
-	/// ネットワークマネージャ
-	/// </summary>
-	private NetworkManager m_NetworkManager = null;
+	/// <summary> メニュー </summary>
+	private ObjectSelector m_Menu = null;
+	/// <summary> オンラインメニュー </summary>
+	private GameObject m_OnlineMenu = null;
+
+	/// <summary> LANを使用 </summary>
+	private bool m_UseLocalNetwork = false;
+
+	/// <summary> マッチングコルーチン </summary>
+	private IEnumerator m_MatchingCoroutine = null;
 
 	/// <summary>
-	/// ネットワークマネージャ登録
+	/// 生成
 	/// </summary>
-	public void SetNetworkManager(NetworkManager newNetworkManager)
+	protected void Awake()
 	{
-		m_NetworkManager = newNetworkManager;
+		m_Menu = GameObject.Find("MatchingCanvas").transform.Find("Menu").GetComponent<ObjectSelector>();
+		m_UseLocalNetwork = m_Menu.transform.Find("GameMode/UseLan").GetComponent<Toggle>().isOn;
 	}
 
 	/// <summary>
-	/// サーバ開始
+	/// マッチング
 	/// </summary>
-	public void StartServer()
+	public IEnumerator Matching()
 	{
-		if (IsOffline)
+		Debug.Log("Start global match");
+
+		NetworkGameManager nm = NetworkGameManager.Instance;
+
+		// マッチ開始
+		nm.StartMatchMaker();
+
+		float findTime = 2f;
+		while (findTime > 0f)
 		{
-			m_NetworkManager.StartServer();
-			Debug.Log("StartServer");
-		}
-	}
+			// ルーム検索
+			yield return nm.FindMatch();
 
-	/// <summary>
-	///  ホスト開始
-	/// </summary>
-	public void StartHost()
-	{
-		if (IsOffline)
-		{
-			m_NetworkManager.StartHost();
-			Debug.Log("StartHost");
-		}
-	}
+			// ルーム参加
+			yield return nm.JoinMatch();
 
-	/// <summary>
-	/// ホスト停止
-	/// </summary>
-	public void StopHost()
-	{
-		if (NetworkServer.active && NetworkClient.active)
-		{
-			m_NetworkManager.StopHost();
-			Debug.Log("StopHost");
-		}
-	}
-
-	/// <summary>
-	/// クライアント開始
-	/// </summary>
-	public void StartClient()
-	{
-		if (IsOffline)
-		{
-			m_NetworkManager.StartClient();
-			Debug.Log("StartClient");
-		}
-	}
-
-	/// <summary>
-	/// クライアント停止
-	/// </summary>
-	public void StopClient()
-	{
-		if (!NetworkServer.active && NetworkClient.active)
-		{
-			m_NetworkManager.StopClient();
-			Debug.Log("StopClient");
-		}
-	}
-
-	/// <summary>
-	/// マッチングメーカー有効化
-	/// </summary>
-	public void StartMatchMaker()
-	{
-		if (IsOffline)
-		{
-			m_NetworkManager.StartMatchMaker();
-			Debug.Log("StartMatchMaker");
-		}
-	}
-
-	/// <summary>
-	/// マッチングメーカー無効化
-	/// </summary>
-	public void DisableMatchMaker()
-	{
-		if (m_NetworkManager.matchMaker != null)
-		{
-			m_NetworkManager.StopMatchMaker();
-			Debug.Log("StopMatchMaker");
-		}
-	}
-
-	/// <summary>
-	/// ルーム作成
-	/// </summary>
-	public Coroutine CreateMatch()
-	{
-		if (m_NetworkManager.matchMaker != null && m_NetworkManager.matchInfo == null && m_NetworkManager.matches == null)
-		{
-			Debug.Log("CreateMatch");
-			System.DateTime now = System.DateTime.Now;
-			m_NetworkManager.matchName = "RM" + now.Hour.ToString() + now.Minute.ToString() + now.Second.ToString();
-			return m_NetworkManager.matchMaker.CreateMatch(m_NetworkManager.matchName, m_NetworkManager.matchSize, true, "", "", "", 0, 0, m_NetworkManager.OnMatchCreate);
-		}
-		return null;
-	}
-
-	/// <summary>
-	/// ルーム解散
-	/// </summary>
-	public Coroutine DestroyMatch()
-	{
-		if (m_NetworkManager.matchMaker != null && m_NetworkManager.matchInfo != null)
-		{
-			Debug.Log("DestroyMatch");
-			return m_NetworkManager.matchMaker.DestroyMatch(m_NetworkManager.matchInfo.networkId, m_NetworkManager.matchInfo.domain, m_NetworkManager.OnDestroyMatch);
-		}
-		return null;
-	}
-
-	/// <summary>
-	/// ルーム検索
-	/// </summary>
-	public Coroutine FindMatch()
-	{
-		if (m_NetworkManager.matchMaker != null && m_NetworkManager.matchInfo == null && m_NetworkManager.matches == null)
-		{
-			Debug.Log("FindMatch");
-			return m_NetworkManager.matchMaker.ListMatches(0, 20, "", false, 0, 0, m_NetworkManager.OnMatchList);
-		}
-		return null;
-	}
-
-	/// <summary>
-	/// ルーム検索中止
-	/// </summary>
-	public void StopFindMatch()
-	{
-		m_NetworkManager.matches = null;
-		Debug.Log("StopFindMatch");
-	}
-
-	/// <summary>
-	/// ルームインデックスリスト取得
-	/// </summary>
-	public int[] GetMatchIndices()
-	{
-		List<int> matches = new List<int>();
-		for (int i = 0; i < m_NetworkManager.matches.Count; i++)
-		{
-			if (m_NetworkManager.matches[i].currentSize > 0)
+			// 成功
+			if (nm.IsJoinedMatch)
 			{
-				matches.Add(i);
-			}
-		}
-		return matches.ToArray();
-	}
-
-	/// <summary>
-	/// ルーム参加
-	/// </summary>
-	public Coroutine JoinMatch(int index = -1)
-	{
-		if (m_NetworkManager.matchMaker != null && m_NetworkManager.matchInfo == null && m_NetworkManager.matches != null)
-		{
-			if (index == -1)
-			{
-				int[] matches = GetMatchIndices();
-				if (matches.Length > 0)
-				{
-					index = matches[0];
-				}
-				else
-				{
-					return null;
-				}
+				break;
 			}
 
-			if (m_NetworkManager.matches.Count > index)
+			findTime -= Time.deltaTime;
+		}
+
+		// ルーム未参加ならルーム作成
+		if (nm.IsJoinedMatch)
+		{
+			yield return nm.CreateMatch();
+
+			// ルーム作成に失敗したらリスタート
+			if (!nm.IsCreatedMatch)
 			{
-				Debug.Log("JoinMatch");
-				m_NetworkManager.matchName = m_NetworkManager.matches[index].name;
-				m_NetworkManager.matchSize = (uint)m_NetworkManager.matches[index].maxSize;
-				return m_NetworkManager.matchMaker.JoinMatch(m_NetworkManager.matches[index].networkId, "", "", "", 0, 0, m_NetworkManager.OnMatchJoined);
+				StartCoroutine(Matching());
+				yield break;
 			}
 		}
-		return null;
+
+		// メンバーが揃うまで待機
+		while (!nm.IsMatchComplete)
+		{
+			yield return null;
+		}
+
+		// ゲーム開始
+		StartCoroutine(StartGame(true));
 	}
 
 	/// <summary>
-	/// オフライン?
+	/// ローカルマッチング
 	/// </summary>
-	public bool IsOffline
+	public IEnumerator LocalMatching()
 	{
-		get { return !NetworkServer.active && !NetworkClient.active && m_NetworkManager.matchMaker == null; }
+		Debug.Log("Start local match");
+
+		NetworkGameManager nm = NetworkGameManager.Instance;
+
+		// クライアントとして開始
+		nm.StartClient();
+		float connectWait = 5f;
+		while (!nm.IsClientConnected() && connectWait > 0f)
+		{
+			connectWait -= Time.deltaTime;
+			yield return null;
+		}
+		if (!nm.IsClientConnected())
+		{
+			nm.StopClient();
+		}
+
+		// クライアントとして開始できなければホストとして開始
+		if (!NetworkClient.active)
+		{
+			nm.StartHost();
+		}
+
+		// メンバーが揃うまで待機
+		while (!nm.IsMatchComplete)
+		{
+			yield return null;
+		}
+
+		// ゲーム開始
+		StartCoroutine(StartGame(true));
+	}
+
+	/// <summary>
+	/// ゲーム開始
+	/// </summary>
+	public IEnumerator StartGame(bool online)
+	{
+		Debug.Log("Start game(" + (online ? "Online" : "Offline") + ")");
+
+		m_Menu.SelectByName(null);
+
+		GameManager.Instance.RequestUnloadScene("Matching");
+		GameManager.Instance.RequestAddScene("DebugModeSelect", false);
+		yield return GameManager.Instance.ApplySceneRequests();
+	}
+
+	/// <summary>
+	/// オンラインで開始
+	/// </summary>
+	public void StartOnline()
+	{
+		m_Menu.SelectByName("Online");
+
+		if (m_UseLocalNetwork)
+		{
+			StartCoroutine(m_MatchingCoroutine = LocalMatching());
+		}
+		else
+		{
+			StartCoroutine(m_MatchingCoroutine = Matching());
+		}
+	}
+
+	/// <summary>
+	/// オフラインで開始
+	/// </summary>
+	public void StartOffline()
+	{
+		NetworkGameManager.Instance.StartHost();
+
+		m_Menu.Select(null);
+		StartCoroutine(StartGame(false));
+	}
+
+	/// <summary>
+	/// マッチキャンセル
+	/// </summary>
+	public void CancelMatch()
+	{
+		// マッチング中止
+		StopCoroutine(m_MatchingCoroutine);
+
+		// ルーム解散
+		if (NetworkGameManager.Instance.IsCreatedMatch)
+		{
+			NetworkGameManager.Instance.DestroyMatch();
+		}
+		// ルーム退室
+		if (NetworkGameManager.Instance.IsJoinedMatch)
+		{
+			NetworkGameManager.Instance.DropMatch();
+		}
+
+		// ローカルマッチ停止
+		NetworkGameManager.Instance.StopLocalMatch();
+
+		// マッチ無効化
+		NetworkGameManager.Instance.DisableMatchMaker();
+
+		m_Menu.SelectByName("GameMode");
+	}
+
+	/// <summary>
+	/// LAN使用切り替え
+	/// </summary>
+	public void ToggleLocalNetworkUsing()
+	{
+		m_UseLocalNetwork = !m_UseLocalNetwork;
 	}
 }

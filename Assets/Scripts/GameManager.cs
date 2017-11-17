@@ -47,23 +47,133 @@ public class GameManager : MonoBehaviour
 	/// </summary>
 	private IEnumerator MainLoop()
 	{
-		yield return SceneManager.LoadSceneAsync("DebugModeSelect", LoadSceneMode.Additive);
+		yield return AddScene("Matching", false);	
+	}
 
-		DebugModeSelect modeSelect = FindObjectOfType<DebugModeSelect>();
-		while (modeSelect.Mode == GameBase.GameMode.None)
+	#region Scene Manage
+
+	/// <summary>
+	/// シーン操作リクエスト
+	/// </summary>
+	private struct SceneControllRequest
+	{
+		public SceneControllType type;
+		public string name;
+		public bool setActive;
+	}
+
+	/// <summary>
+	/// シーン操作タイプ
+	/// </summary>
+	public enum SceneControllType
+	{
+		Add,
+		Unload,
+	}
+	
+	/// <summary> シーン操作リクエスト </summary>
+	private List<SceneControllRequest> m_SceneControllRequests = new List<SceneControllRequest>();
+
+	/// <summary>
+	/// シーン追加リクエスト
+	/// </summary>
+	public void RequestAddScene(string sceneName, bool setActive)
+	{
+		RequestSceneControll(SceneControllType.Add, sceneName, setActive);
+	}
+
+	/// <summary>
+	/// シーン破棄リクエスト
+	/// </summary>
+	public void RequestUnloadScene(string sceneName)
+	{
+		RequestSceneControll(SceneControllType.Unload, sceneName, false);
+	}
+
+	/// <summary>
+	/// シーン操作リクエスト
+	/// </summary>
+	private void RequestSceneControll(SceneControllType type, string sceneName, bool setActive)
+	{
+		SceneControllRequest request = new SceneControllRequest();
+		request.type = type;
+		request.name = sceneName;
+		request.setActive = setActive;
+		m_SceneControllRequests.Add(request);
+	}
+
+	/// <summary>
+	/// リクエストされたシーン操作適用
+	/// </summary>
+	public Coroutine ApplySceneRequests()
+	{
+		return StartCoroutine(ApplySceneRequestsProcess());
+	}
+
+	/// <summary>
+	/// リクエストされたシーン操作適用
+	/// </summary>
+	private IEnumerator ApplySceneRequestsProcess()
+	{
+		foreach (var request in m_SceneControllRequests)
 		{
-			PlayerCharacterId = modeSelect.CharacterId;
-			yield return null;
+			switch (request.type)
+			{
+				case SceneControllType.Add:
+					yield return AddScene(request.name, request.setActive);
+					break;
+
+				case SceneControllType.Unload:
+					yield return UnloadScene(request.name);
+					break;
+			}
 		}
-		yield return SceneManager.UnloadSceneAsync("DebugModeSelect");
+		m_SceneControllRequests.Clear();
+	}
 
-		yield return SceneManager.LoadSceneAsync(modeSelect.Mode.ToString(), LoadSceneMode.Additive);
+	/// <summary>
+	/// シーン追加
+	/// </summary>
+	public Coroutine AddScene(string sceneName, bool setActive)
+	{
+		return StartCoroutine(AddSceneProcess(sceneName, setActive));
+	}
+	
+	/// <summary>
+	/// シーン追加
+	/// </summary>
+	private IEnumerator AddSceneProcess(string sceneName, bool setActive)
+	{
+		// シーン読み込み
+        yield return SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
 
-		while (!SceneManager.SetActiveScene(SceneManager.GetSceneByName(modeSelect.Mode.ToString())))
+		// アクティブシーンに設定
+		if (setActive)
 		{
-			yield return null;
+			while (!SceneManager.SetActiveScene(SceneManager.GetSceneByName(sceneName)))
+			{
+				yield return null;
+			}
 		}
 	}
+
+	/// <summary>
+	/// シーン破棄
+	/// </summary>
+	public Coroutine UnloadScene(string sceneName)
+	{
+		return StartCoroutine(UnloadSceneProcess(sceneName));
+	}
+
+	/// <summary>
+	/// シーン破棄
+	/// </summary>
+	private IEnumerator UnloadSceneProcess(string sceneName)
+	{
+		yield return SceneManager.UnloadSceneAsync(sceneName);
+	}
+
+	#endregion
 
 	/// <summary>
 	/// インスタンス
