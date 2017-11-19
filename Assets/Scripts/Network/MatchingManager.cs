@@ -49,7 +49,7 @@ public class MatchingManager : MonoBehaviour
 		// マッチ開始
 		nm.StartMatchMaker();
 
-		float findTime = 2f;
+		float findTime = 1f;
 		while (findTime > 0f)
 		{
 			// ルーム検索
@@ -68,7 +68,7 @@ public class MatchingManager : MonoBehaviour
 		}
 
 		// ルーム未参加ならルーム作成
-		if (nm.IsJoinedMatch)
+		if (!nm.IsJoinedMatch)
 		{
 			yield return nm.CreateMatch();
 

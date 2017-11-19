@@ -110,7 +110,7 @@ public class NetworkGameManager : NetworkManager
 	/// </summary>
 	public Coroutine CreateMatch()
 	{
-		if (!IsCreatedMatch && matchMaker != null && matchInfo == null && matches == null)
+		if (!IsCreatedMatch && matchMaker != null && matchInfo == null)
 		{
 			Debug.Log("CreateMatch");
 			System.DateTime now = System.DateTime.Now;
@@ -191,10 +191,10 @@ public class NetworkGameManager : NetworkManager
 		{
 			if (index == -1)
 			{
-				int[] matches = GetMatchIndices();
-				if (matches.Length > 0)
+				int[] indices = GetMatchIndices();
+				if (indices.Length > 0)
 				{
-					index = matches[0];
+					index = indices[0];
 				}
 				else
 				{
@@ -229,11 +229,18 @@ public class NetworkGameManager : NetworkManager
 	{
 		if (IsJoinedMatch && matchMaker != null && matchInfo != null)
 		{
-			ReleasePlayer();
-			IsJoinedMatch = false;
-			return matchMaker.DropConnection(matchInfo.networkId, matchInfo.nodeId, 0, null);
+			return matchMaker.DropConnection(matchInfo.networkId, matchInfo.nodeId, 0, OnDropMatch);
 		}
 		return null;
+	}
+
+	/// <summary>
+	/// ルーム退室通知
+	/// </summary>
+	public void OnDropMatch(bool success, string extendedInfo)
+	{
+		ReleasePlayer();
+		IsJoinedMatch = false;
 	}
 
 	/// <summary>
