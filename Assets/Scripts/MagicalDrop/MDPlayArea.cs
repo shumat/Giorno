@@ -273,7 +273,7 @@ public class MDPlayArea : MonoBehaviour
 			// ドロップ生成
 			else
 			{
-				drop = Instantiate(DropTemplate).GetComponent<MDDrop>();
+				drop = Instantiate(DropTemplate, transform).GetComponent<MDDrop>();
 				drop.transform.SetParent(m_BlockParent.transform);
 			}
 

@@ -179,10 +179,7 @@ public class MDPlayer : PlayerBase
 				break;
 
 			case PlayerController.CommandType.MD_Add:
-				if (command.values != null)
-				{
-					(Game as MDGame).PlayArea.AddNewLine();
-				}
+				(Game as MDGame).PlayArea.AddNewLine();
 				break;
 		}
 	}
