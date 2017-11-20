@@ -27,6 +27,9 @@ public class MDPlayArea : MonoBehaviour
 
 	/// <summary> サイズ </summary>
 	private Vector3 m_Size = Vector2.zero;
+	
+	/// <summary> ゲーム </summary>
+	public MDGame Game { get; private set; }
 
 	/// <summary> ライン </summary>
 	private List<MDDropBlock[]> m_Lines = new List<MDDropBlock[]>();
@@ -76,8 +79,10 @@ public class MDPlayArea : MonoBehaviour
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	public void Initialize()
+	public void Initialize(MDGame game)
 	{
+		Game = game;
+
 		m_Height = MDGame.Config.PlayAreaHeight;
 		m_Width = MDGame.Config.PlayAreaWidth;
 
@@ -127,7 +132,7 @@ public class MDPlayArea : MonoBehaviour
 	/// <summary>
 	/// 更新
 	/// </summary>
-	protected void Update()
+	public void Process()
 	{
 		if (!m_EnableUpdate)
 		{
@@ -237,14 +242,14 @@ public class MDPlayArea : MonoBehaviour
 	/// </summary>
 	private bool IsLineOver()
 	{
-		for (int row = 0; row < m_Width; row++)
-		{
-			MDDropBlock block = GetMostUnderFullBlock(row);
-			if (block.AttachedDrop != null && !block.AttachedDrop.IsValidVanish && block.AttachedDrop.CurrentState != MDDrop.State.Vanish && block.Position.y <= MinBlockPositionY)
-			{
-				return true;
-			}
-		}
+		//for (int row = 0; row < m_Width; row++)
+		//{
+		//	MDDropBlock block = GetMostUnderFullBlock(row);
+		//	if (block.AttachedDrop != null && !block.AttachedDrop.IsValidVanish && block.AttachedDrop.CurrentState != MDDrop.State.Vanish && block.Position.y <= MinBlockPositionY)
+		//	{
+		//		return true;
+		//	}
+		//}
 		return false;
 	}
 
@@ -504,7 +509,7 @@ public class MDPlayArea : MonoBehaviour
 		// 連鎖数リセット
 		if (needsResetChain && m_ChainReceiveTime <= 0f)
 		{
-			MDGame.Player.ChainEvent(ChainCount);
+			(Game.Player as MDPlayer).ChainEvent(ChainCount);
 			m_ChainCount = 0;
 		}
 	}
@@ -606,7 +611,7 @@ public class MDPlayArea : MonoBehaviour
 						block.Detach();
 					}
 
-					drop.BeginPull(MDGame.Player);
+					drop.BeginPull(Game.Player as MDPlayer);
 
 					m_PulledDrop.Add(drop);
 
@@ -658,7 +663,7 @@ public class MDPlayArea : MonoBehaviour
 
 			// プッシュ
 			m_PushingDrops.Add(m_PulledDrop[i]);
-			m_PulledDrop[i].BeginPush(MDGame.Player.transform.position + Vector3.down * i * MDDropBlock.Size);
+			m_PulledDrop[i].BeginPush(Game.Player.transform.position + Vector3.down * i * MDDropBlock.Size);
 
 			block = block.GetLink(PlayAreaBlock.Dir.Down) as MDDropBlock;
 		}

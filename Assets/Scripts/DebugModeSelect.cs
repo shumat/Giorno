@@ -16,6 +16,9 @@ public class DebugModeSelect : MonoBehaviour
 
 	private IEnumerator StartGame(GameBase.GameMode gameMode)
 	{
+		// ゲームモード送信
+		NetworkGameManager.Instance.LocalPlayer.CmdSetGameMode(gameMode);
+
 		// 同期待機開始
 		NetworkGameManager.Instance.StandbySync();
 

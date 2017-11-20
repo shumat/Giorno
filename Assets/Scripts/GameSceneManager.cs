@@ -17,7 +17,7 @@ public class GameSceneManager : MonoBehaviour
 			PlayerController[] players = NetworkGameManager.Instance.GetPlayers();
 			foreach (PlayerController pc in players)
 			{
-				pc.BeginGame(GameBase.GameMode.Tetris);
+				pc.BeginGame();
 			}
 			m_GameStarted = true;
 		}

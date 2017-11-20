@@ -5,84 +5,61 @@ using UnityEngine;
 public class MDGame : GameBase
 {
 	/// <summary> コンフィグ </summary>
-	[SerializeField]
-	private MDConfig m_Config = null;
-
-	/// <summary> インスタンス </summary>
-	private static MDGame m_Instance = null;
-
-	/// <summary> プレイヤー </summary>
-	private MDPlayer m_Player = null;
-
-	public GameObject m_PlayerTemplate = null; // TODO: AssetBundle
-
-	/// <summary>
-	/// 生成
-	/// </summary>
-	protected void Awake()
-	{
-		if (m_Instance != null)
-		{
-			Destroy(m_Instance);
-		}
-		m_Instance = this;
-
-		MDDropBlock.Size = m_Config.DropSize;
-	}
-
-	/// <summary>
-	/// 開始
-	/// </summary>
-	protected void Start()
-	{
-		StartCoroutine(InitGame());
-	}
-
-	/// <summary>
-	/// ゲーム初期化
-	/// </summary>
-	private IEnumerator InitGame()
-	{
-		m_Player = Instantiate(m_PlayerTemplate).GetComponent<MDPlayer>();
-		m_Player.name = m_PlayerTemplate.name;
-		m_Player.Initialize(this);
-
-		yield return null;
-
-		StartCoroutine(GameLoop());
-	}
-	/// <summary>
-	/// ゲームループ
-	/// </summary>
-	private IEnumerator GameLoop()
-	{
-		if (m_Player.IsPause)
-		{
-			m_Player.OnPause();
-		}
-		else
-		{
-			m_Player.Play();
-		}
-
-		yield return null;
-
-		StartCoroutine(GameLoop());
-	}
-
-	/// <summary>
-	/// プレイヤー
-	/// </summary>
-	public static MDPlayer Player
-	{
-		get { return m_Instance.m_Player; }
-	}
+	private static MDConfig m_Config = null;
 
 	/// <summary>
 	/// コンフィグ
 	/// </summary>
 	public static MDConfig Config
 	{
-		get { return m_Instance.m_Config; }
+		get
+		{
+			if (m_Config == null)
+			{
+				m_Config = Resources.Load<MDConfig>("Configs/MDConfig");
+			}
+			return m_Config;
+		}
+	}
+
+	/// <summary> プレイエリア </summary>
+	public MDPlayArea PlayArea { get; private set; }
+
+	public GameObject PlayerTemplate = null; // TODO: AssetBundle
+	public GameObject PlayAreaTemplate; // TODO: AssetBundle
+
+	/// <summary>
+	/// 生成
+	/// </summary>
+	protected void Awake()
+	{
+		MDDropBlock.Size = Config.DropSize;
+	}
+
+	/// <summary>
+	/// 初期化
+	/// </summary>
+	public override void Initialize(PlayerController pc)
+	{
+		base.Initialize(pc);
+
+		Player = Instantiate(PlayerTemplate).GetComponent<MDPlayer>();
+		PlayArea = Instantiate(PlayAreaTemplate).GetComponent<MDPlayArea>();
+
+		Player.Initialize(this);
+		PlayArea.Initialize(this);
+
+		if (!PC.isLocalPlayer)
+		{
+			PlayArea.transform.position += Vector3.right * 10f;
+		}
+	}
+
+	/// <summary>
+	/// 更新
+	/// </summary>
+	public override void Process()
+	{
+		PlayArea.Process();
 	}
 }

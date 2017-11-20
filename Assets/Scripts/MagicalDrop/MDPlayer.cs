@@ -4,9 +4,6 @@ using UnityEngine;
 
 public class MDPlayer : PlayerBase
 {
-	/// <summary> プレイエリア </summary>
-	private MDPlayArea m_PlayArea = null;
-
 	/// <summary> タッチ開始地点 </summary>
 	private Vector3 m_TouchStartPos = Vector3.zero;
 	/// <summary> タッチ時間 </summary>
@@ -22,13 +19,13 @@ public class MDPlayer : PlayerBase
 	private float m_LineCreateWaitTime = 0f;
 
 	/// <summary> ゲームレベル </summary>
-	private int m_GameLevel = 0;
+	//private int m_GameLevel = 0;
 
 	/// <summary> スプライトレンダラ </summary>
 	private SpriteRenderer m_SpriteRenderer = null;
 
 	/// <summary> キャラクター </summary>
-	private Character m_Character = null;
+	//private Character m_Character = null;
 
 	/// <summary>
 	/// 生成
@@ -36,8 +33,7 @@ public class MDPlayer : PlayerBase
 	protected void Awake()
 	{
 		m_SpriteRenderer = GetComponent<SpriteRenderer>();
-		m_PlayArea = FindObjectOfType<MDPlayArea>();
-		m_Character = FindObjectOfType<Character>();
+		//m_Character = FindObjectOfType<Character>();
 	}
 
 	/// <summary>
@@ -46,13 +42,16 @@ public class MDPlayer : PlayerBase
 	public override void Initialize(GameBase game)
 	{
 		base.Initialize(game);
+		//m_Character.Initialize(GameManager.Instance.PlayerCharacterId);
+	}
 
-		m_PlayArea.Initialize();
-
-		m_CurrentRow = m_PlayArea.Width / 2;
+	/// <summary>
+	/// 開始
+	/// </summary>
+	protected void Start()
+	{
+		m_CurrentRow = MDGame.Config.PlayAreaWidth / 2;
 		UpdatePosition();
-
-		m_Character.Initialize(GameManager.Instance.PlayerCharacterId);
 	}
 
 	/// <summary>
@@ -62,6 +61,8 @@ public class MDPlayer : PlayerBase
 	{
 		base.Play();
 
+		MDPlayArea playArea = (Game as MDGame).PlayArea;
+
 		// タッチした瞬間
 		if (InputManager.IsTouchDown())
 		{
@@ -70,13 +71,13 @@ public class MDPlayer : PlayerBase
 			m_TouchTime = 0;
 
 			// 背景ライン演出
-			m_PlayArea.SetBackLineFlash(m_PlayArea.ConvertPositionToRow(m_TouchStartPos.x));
+			playArea.SetBackLineFlash(playArea.ConvertPositionToRow(m_TouchStartPos.x));
 		}
 		// タッチ中
 		if (InputManager.IsTouch())
 		{
 			// 列を更新
-			m_CurrentRow = m_PlayArea.ConvertPositionToRow(m_TouchStartPos.x);
+			m_CurrentRow = playArea.ConvertPositionToRow(m_TouchStartPos.x);
 			UpdatePosition();
 
 			// ライン作成
@@ -87,7 +88,7 @@ public class MDPlayer : PlayerBase
 				if (m_LineCreateWaitTime <= 0f)
 				{
 					m_LineCreateWaitTime = MDGame.Config.LineCreateContinueTouchTime;
-					m_PlayArea.AddNewLine();
+					AddLine();
 				}
 			}
 			// アクション
@@ -97,17 +98,17 @@ public class MDPlayer : PlayerBase
 				if (!m_IgnoreAction && Mathf.Abs(dif.y) > MDGame.Config.ActionStartSwipeDistance)
 				{
 					// 上
-					if (dif.y > 0 && m_PlayArea.IsValidPush())
+					if (dif.y > 0 && playArea.IsValidPush())
 					{
 						// プッシュ
-						m_PlayArea.PushDrop(m_CurrentRow);
+						PushDrop(m_CurrentRow);
 						m_IgnoreAction = true;
 					}
 					// 下
-					else if (dif.y <= 0 && m_PlayArea.IsValidPull(m_CurrentRow))
+					else if (dif.y <= 0 && playArea.IsValidPull(m_CurrentRow))
 					{
 						// プル
-						m_PlayArea.PullDrop(m_CurrentRow);
+						PullDrop(m_CurrentRow);
 						m_IgnoreAction = true;
 					}
 				}
@@ -115,7 +116,75 @@ public class MDPlayer : PlayerBase
 		}
 
 		// 適当に色変更
-		m_SpriteRenderer.color = m_PlayArea.GetPulledDrop(0) == null ? Color.white : m_PlayArea.GetPulledDrop(0).SpriteColor;
+		m_SpriteRenderer.color = playArea.GetPulledDrop(0) == null ? Color.white : playArea.GetPulledDrop(0).SpriteColor;
+	}
+
+	/// <summary>
+	/// プッシュ
+	/// </summary>
+	private void PushDrop(int row)
+	{
+		PlayerController.CommandData command = new PlayerController.CommandData();
+		command.type =  (byte)PlayerController.CommandType.MD_Push;
+		command.values = new int[1];
+		command.values[0] = row;
+		SetNextCommand(command);
+	}
+
+	/// <summary>
+	/// プル
+	/// </summary>
+	private void PullDrop(int row)
+	{
+		PlayerController.CommandData command = new PlayerController.CommandData();
+		command.type =  (byte)PlayerController.CommandType.MD_Pull;
+		command.values = new int[1];
+		command.values[0] = row;
+		SetNextCommand(command);
+	}
+
+	/// <summary>
+	/// ライン追加
+	/// </summary>
+	private void AddLine()
+	{
+		PlayerController.CommandData command = new PlayerController.CommandData();
+		command.type =  (byte)PlayerController.CommandType.MD_Add;
+		SetNextCommand(command);
+	}
+
+	/// <summary>
+	/// コマンド実行
+	/// </summary>
+	public override void ExecuteCommand(PlayerController.CommandData command)
+	{
+		switch ((PlayerController.CommandType)command.type)
+		{
+			case PlayerController.CommandType.MD_Push:
+				if (command.values != null)
+				{
+					m_CurrentRow = command.values[0];
+					UpdatePosition();
+					(Game as MDGame).PlayArea.PushDrop(m_CurrentRow);
+				}
+				break;
+
+			case PlayerController.CommandType.MD_Pull:
+				if (command.values != null)
+				{
+					m_CurrentRow = command.values[0];
+					UpdatePosition();
+					(Game as MDGame).PlayArea.PullDrop(m_CurrentRow);
+				}
+				break;
+
+			case PlayerController.CommandType.MD_Add:
+				if (command.values != null)
+				{
+					(Game as MDGame).PlayArea.AddNewLine();
+				}
+				break;
+		}
 	}
 
 	/// <summary>
@@ -141,26 +210,26 @@ public class MDPlayer : PlayerBase
 	/// </summary>
 	public IEnumerator ChainAppeal(int chainCount)
 	{
-//		m_IsPause = true;
-//		m_PlayArea.BeginPause();
+		//m_IsPause = true;
+		//m_PlayArea.BeginPause();
 
-		m_Character.Visible = true;
-		m_Character.PlayAnim("Chain_0");
+		//m_Character.Visible = true;
+		//m_Character.PlayAnim("Chain_0");
 
-		m_Character.ShowChain(true, chainCount);
+		//m_Character.ShowChain(true, chainCount);
 
-		yield return null;
+		//yield return null;
 
-		while (!m_Character.IsAnimStoped())
-		{
-			yield return null;
-		}
+		//while (!m_Character.IsAnimStoped())
+		//{
+		//	yield return null;
+		//}
 
-		m_Character.Visible = false;
-		m_Character.ShowChain(false, 0);
+		//m_Character.Visible = false;
+		//m_Character.ShowChain(false, 0);
 
-//		m_IsPause = false;
-//		m_PlayArea.EndPause();
+		//		m_IsPause = false;
+		//		m_PlayArea.EndPause();
 
 		yield return null;
 	}
@@ -172,8 +241,8 @@ public class MDPlayer : PlayerBase
 	{
 		// 適当に移動
 		Vector3 pos = transform.position;
-		pos.y = m_PlayArea.MinBlockPositionY;
-		pos.x = m_PlayArea.GetBlockPosition(0, m_CurrentRow).x;
+		pos.y = (Game as MDGame).PlayArea.MinBlockPositionY;
+		pos.x = (Game as MDGame).PlayArea.GetBlockPosition(0, m_CurrentRow).x;
 		transform.position = pos;
 	}
 
@@ -188,10 +257,10 @@ public class MDPlayer : PlayerBase
 		style.fontSize = 50;
 		style.normal = styleState;
 		GUI.Label(new Rect(10, 100, 300, 100),
-			m_PlayArea.ChainCount.ToString() + " Chain\n" +
-			"Chain Receive " + m_PlayArea.ChainReceiveTime.ToString() + "\n" +
-			"IsValidPull " + m_PlayArea.IsValidPull(m_CurrentRow) + "\n" +
-			"PulledDropCount " + m_PlayArea.GetPulledDropCount() + "\n" +
-			"PushingDropCount " + m_PlayArea.GetPushingDropCount() , style);
+			(Game as MDGame).PlayArea.ChainCount.ToString() + " Chain\n" +
+			"Chain Receive " + (Game as MDGame).PlayArea.ChainReceiveTime.ToString() + "\n" +
+			"IsValidPull " + (Game as MDGame).PlayArea.IsValidPull(m_CurrentRow) + "\n" +
+			"PulledDropCount " + (Game as MDGame).PlayArea.GetPulledDropCount() + "\n" +
+			"PushingDropCount " + (Game as MDGame).PlayArea.GetPushingDropCount() , style);
 	}
 }

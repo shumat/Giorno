@@ -28,6 +28,9 @@ public class PlayerController : NetworkBehaviour
 	public enum CommandType
 	{
 		None,
+		MD_Push,
+		MD_Pull,
+		MD_Add,
 		TR_Move,
 		TR_Rotate,
 	}
@@ -47,7 +50,17 @@ public class PlayerController : NetworkBehaviour
 	/// <summary> シード同期乱数 </summary>
 	public System.Random SyncRand { get; private set; }
 
-	public GameObject GameTemplate;
+	/// <summary> ゲームモード </summary>
+	[SyncVar]
+	private GameBase.GameMode m_GameMode = GameBase.GameMode.None;
+
+	/// <summary>
+	/// ゲームモード
+	/// </summary>
+	public GameBase.GameMode GameMode
+	{
+		get { return m_GameMode; }
+	}
 
 	/// <summary>
 	/// 開始
@@ -244,20 +257,37 @@ public class PlayerController : NetworkBehaviour
 	{
 		++NetworkGameManager.Instance.SyncCount;
 	}
+	
+	/// <summary>
+	/// ゲームモード送信
+	/// </summary>
+	[Command(channel=Channels.DefaultReliable)]
+	public void CmdSetGameMode(GameBase.GameMode mode)
+	{
+		m_GameMode = mode;
+	}
 
 	/// <summary>
 	/// ゲーム開始
 	/// </summary>
-	public void BeginGame(GameBase.GameMode mode)
+	public void BeginGame()
 	{
-		switch (mode)
+		GameObject obj = null;
+		Debug.Log(m_GameMode);
+		switch (m_GameMode)
 		{
 			case GameBase.GameMode.MagicalDrop:
+				obj = Resources.Load<GameObject>("MagicalDrop/MDGame");
+				Game = Instantiate(obj).GetComponent<MDGame>();
+				Game.Initialize(this);
 				break;
+
 			case GameBase.GameMode.PanelDePon:
 				break;
+
 			case GameBase.GameMode.Tetris:
-				Game = Instantiate(GameTemplate).GetComponent<TRGame>();
+				obj = Resources.Load<GameObject>("Tetris/TRGame");
+				Game = Instantiate(obj).GetComponent<TRGame>();
 				Game.Initialize(this);
 				break;
 		}
