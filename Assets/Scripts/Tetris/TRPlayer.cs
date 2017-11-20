@@ -4,9 +4,6 @@ using UnityEngine;
 
 public class TRPlayer : PlayerBase
 {
-	/// <summary> プレイエリア </summary>
-	private TRPlayArea m_PlayArea = null;
-	
 	/// <summary> 前回のタッチ座標 </summary>
 	private Vector3 m_PrevTouchPosition = Vector3.zero;
 	/// <summary> タッチ移動距離 </summary>
@@ -17,24 +14,12 @@ public class TRPlayer : PlayerBase
 	/// <summary> テトロミノ移動先 </summary>
 	private Vector3 m_TetrominoTarget = Vector3.zero;
 
-	public GameObject PlayAreaTemplate; // TODO: AssetBundle
-
-	/// <summary>
-	/// 生成
-	/// </summary>
-	protected void Awake()
-	{
-		m_PlayArea = Instantiate(PlayAreaTemplate).GetComponent<TRPlayArea>();
-	}
-
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	public override void Initialize()
+	public override void Initialize(GameBase game)
 	{
-		base.Initialize();
-		m_PlayArea.Initialize();
-		m_PlayArea.BeginProcess();
+		base.Initialize(game);
 	}
 
 	/// <summary>
@@ -51,7 +36,7 @@ public class TRPlayer : PlayerBase
 			m_TouchMoveDistance = 0;
 
 			m_PossibleMoveTetromino = true;
-			m_TetrominoTarget = m_PlayArea.GetTetrominoPosition();
+			m_TetrominoTarget = (Game as TRGame).PlayArea.GetTetrominoPosition();
 		}
 		else
 		{
@@ -61,7 +46,7 @@ public class TRPlayer : PlayerBase
 				// 移動距離が短ければ回転
 				if (m_TouchMoveDistance < 0.2f)
 				{
-					m_PlayArea.RotateTetromino(false);
+					RotateTetromino(false);
 				}
 			}
 			// タッチ中
@@ -82,66 +67,58 @@ public class TRPlayer : PlayerBase
 				// テトロミノ移動
 				if (m_PossibleMoveTetromino)
 				{
-					Vector2i targetGrid = m_PlayArea.ConvertWorldToGridPosition(m_TetrominoTarget);
-
-					/*
-					// 有効な範囲に丸める
-					if (targetGrid.x < -1)
-					{
-						m_TetrominoTarget.x = m_PlayArea.ConvertGridToWorldPosition(new Vector2i(-1, targetGrid.y)).x;
-					}
-					else if (targetGrid.x > m_PlayArea.Width)
-					{
-						m_TetrominoTarget.x = m_PlayArea.ConvertGridToWorldPosition(new Vector2i(m_PlayArea.Width, targetGrid.y)).x;
-					}
-					if (targetGrid.y < m_PlayArea.CurrentLine)
-					{
-						m_TetrominoTarget.y = m_PlayArea.ConvertGridToWorldPosition(new Vector2i(targetGrid.x, m_PlayArea.CurrentLine)).y;
-					}
-					else if (targetGrid.y > m_PlayArea.Height)
-					{
-						m_TetrominoTarget.y = m_PlayArea.ConvertGridToWorldPosition(new Vector2i(targetGrid.x, m_PlayArea.Height)).y;
-					}
-					 */
-
-					// 移動
-					m_PlayArea.MoveTetromino(targetGrid);
-
+					MoveTetromino((Game as TRGame).PlayArea.ConvertWorldToGridPosition(m_TetrominoTarget));
 				}
 			}
 		}
-
-		if (Input.GetKeyDown(KeyCode.A))
-		{
-			m_PlayArea.RotateTetromino(true);
-		}
-		if (Input.GetKeyDown(KeyCode.D))
-		{
-			m_PlayArea.RotateTetromino(false);
-		}
-
-		if (Input.GetMouseButtonDown(1))
-		{
-			m_PlayArea.RotateTetromino(true);
-		}
 	}
 
 	/// <summary>
-	/// フレーム更新
+	/// テトロミノ移動
 	/// </summary>
-	public override void StepUpdate()
+	private void MoveTetromino(Vector2i targetGrid)
 	{
-		base.StepUpdate();
-		m_PlayArea.StepUpdate();
+		PlayerController.CommandData command = new PlayerController.CommandData();
+		command.type =  (byte)PlayerController.CommandType.TR_Move;
+		command.values = new int[2];
+		command.values[0] = targetGrid.x;
+		command.values[1] = targetGrid.y;
+		SetNextCommand(command);
 	}
 
 	/// <summary>
-	/// 一時停止
+	/// テトロミノ回転
 	/// </summary>
-	public override void SetPause(bool pause)
+	private void RotateTetromino(bool negative)
 	{
-		base.SetPause(pause);
-		m_PlayArea.SetPause(pause);
+		PlayerController.CommandData command = new PlayerController.CommandData();
+		command.type =  (byte)PlayerController.CommandType.TR_Rotate;
+		command.values = new int[1];
+		command.values[0] = (byte)(negative ? 1 : 0);
+		SetNextCommand(command);
+	}
+
+	/// <summary>
+	/// コマンド実行
+	/// </summary>
+	public override void ExecuteCommand(PlayerController.CommandData command)
+	{
+		switch ((PlayerController.CommandType)command.type)
+		{
+			case PlayerController.CommandType.TR_Move:
+				if (command.values != null)
+				{
+					(Game as TRGame).PlayArea.MoveTetromino(new Vector2i(command.values[0], command.values[1]));
+				}
+				break;
+
+			case PlayerController.CommandType.TR_Rotate:
+				if (command.values != null)
+				{
+					(Game as TRGame).PlayArea.RotateTetromino(command.values[0] == 1);
+				}
+				break;
+		}
 	}
 
 	/// <summary>

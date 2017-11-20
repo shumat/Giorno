@@ -12,8 +12,8 @@ public class TRPlayArea : MonoBehaviour
 	/// <summary> サイズ </summary>
 	private Vector3 m_Size = Vector2.zero;
 
-	/// <summary> メイン処理コルーチン </summary>
-	private IEnumerator m_MainCoroutine = null;
+	/// <summary> ゲーム </summary>
+	private TRGame m_Game = null;
 
 	/// <summary> ライン </summary>
 	private List<TRPanelBlock[]> m_Lines = new List<TRPanelBlock[]>();
@@ -59,8 +59,10 @@ public class TRPlayArea : MonoBehaviour
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	public void Initialize()
+	public void Initialize(TRGame game)
 	{
+		m_Game = game;
+
 		// サイズ登録
 		Height = TRGame.Config.PlayAreaHeight;
 		Width = TRGame.Config.PlayAreaWidth;
@@ -104,21 +106,9 @@ public class TRPlayArea : MonoBehaviour
 	}
 
 	/// <summary>
-	/// メイン処理開始
+	/// 更新
 	/// </summary>
-	public void BeginProcess()
-	{
-		if (m_MainCoroutine == null)
-		{
-			m_MainCoroutine = Process();
-			StartCoroutine(m_MainCoroutine);
-		}
-	}
-
-	/// <summary>
-	/// メイン処理
-	/// </summary>
-	private IEnumerator Process()
+	public void Process()
 	{
 		// ラインを下げる
 		DownLine();
@@ -148,42 +138,6 @@ public class TRPlayArea : MonoBehaviour
 		{
 			SetNextTetromino((m_NextTetrominoTypes[0] + 1) % m_Tetromino.NumType);
 		}
-
-		// 1フレーム待機
-		yield return null;
-
-		m_MainCoroutine = Process();
-		StartCoroutine(m_MainCoroutine);
-	}
-
-	/// <summary>
-	/// ステップ実行
-	/// </summary>
-	public void StepUpdate()
-	{
-		if (m_MainCoroutine != null)
-		{
-			StartCoroutine(m_MainCoroutine);
-			StopCoroutine(m_MainCoroutine);
-		}
-	}
-
-	/// <summary>
-	/// 一時停止
-	/// </summary>
-	public void SetPause(bool pause)
-	{
-		if (m_MainCoroutine != null)
-		{
-			if (pause)
-			{
-				StopCoroutine(m_MainCoroutine);
-			}
-			else
-			{
-				StartCoroutine(m_MainCoroutine);
-			}
-		}
 	}
 
 	#region Tetromino
@@ -204,7 +158,8 @@ public class TRPlayArea : MonoBehaviour
 		ResetDownLineWait();
 		ResetTetrominoAttachWait();
 
-		TRGame.Player.NewTetrominoCreateEvent();
+		// テトロミノ作成イベント
+		(m_Game.Player as TRPlayer).NewTetrominoCreateEvent();
 
 		// 姿勢更新
 		return UpdateTetromino();
@@ -217,7 +172,7 @@ public class TRPlayArea : MonoBehaviour
 	{
 		for (int i = 0; i < 5 - m_NextTetrominoTypes.Count; i++)
 		{
-			m_NextTetrominoTypes.Add(Random.Range(0, m_Tetromino.NumType));
+			m_NextTetrominoTypes.Add(m_Game.PC.SyncRand.Next(m_Tetromino.NumType));
 		}
 		int next = m_NextTetrominoTypes[0];
 		m_NextTetrominoTypes.RemoveAt(0);

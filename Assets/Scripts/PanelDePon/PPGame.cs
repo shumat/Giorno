@@ -44,7 +44,7 @@ public class PPGame : GameBase
 		GameObject obj = new GameObject();
 		m_Player = obj.AddComponent<PPPlayer>();
 		m_Player.name = "Player";
-		m_Player.Initialize();
+		m_Player.Initialize(this);
 
 		yield return null;
 

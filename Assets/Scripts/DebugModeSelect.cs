@@ -7,13 +7,24 @@ public class DebugModeSelect : MonoBehaviour
 	[SerializeField]
 	public Character m_Character = null;
 
+	private IEnumerator m_StartGameCoroutine = null;
+
 	private void Start()
 	{
 		//m_Character.Visible = true;
 	}
 
-	private void StartGame(GameBase.GameMode gameMode)
+	private IEnumerator StartGame(GameBase.GameMode gameMode)
 	{
+		// 同期待機開始
+		NetworkGameManager.Instance.StandbySync();
+
+		// 同期完了まで待機
+		while (!NetworkGameManager.Instance.IsCompleateSync())
+		{
+			yield return null;
+		}
+
 		GameManager.Instance.RequestUnloadScene("DebugModeSelect");
 		GameManager.Instance.RequestAddScene(gameMode.ToString(), true);
 		GameManager.Instance.ApplySceneRequests();
@@ -21,17 +32,26 @@ public class DebugModeSelect : MonoBehaviour
 
 	public void StartPanelDePON()
 	{
-		StartGame(GameBase.GameMode.PanelDePon);
+		if (m_StartGameCoroutine == null)
+		{
+			StartCoroutine(m_StartGameCoroutine = StartGame(GameBase.GameMode.PanelDePon));
+		}
 	}
 
 	public void StartMagicalDrop()
 	{
-		StartGame(GameBase.GameMode.MagicalDrop);
+		if (m_StartGameCoroutine == null)
+		{
+			StartCoroutine(m_StartGameCoroutine = StartGame(GameBase.GameMode.MagicalDrop));
+		}
 	}
 
 	public void StartTetris()
 	{
-		StartGame(GameBase.GameMode.Tetris);
+		if (m_StartGameCoroutine == null)
+		{
+			StartCoroutine(m_StartGameCoroutine = StartGame(GameBase.GameMode.Tetris));
+		}
 	}
 
 	public void SetCharacter(int id)

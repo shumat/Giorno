@@ -45,7 +45,7 @@ public class MDGame : GameBase
 	{
 		m_Player = Instantiate(m_PlayerTemplate).GetComponent<MDPlayer>();
 		m_Player.name = m_PlayerTemplate.name;
-		m_Player.Initialize();
+		m_Player.Initialize(this);
 
 		yield return null;
 

@@ -5,76 +5,61 @@ using UnityEngine;
 public class TRGame : GameBase
 {
 	/// <summary> コンフィグ </summary>
-	[SerializeField]
-	private TRConfig m_Config = null;
-
-	/// <summary> インスタンス </summary>
-	private static TRGame m_Instance = null;
-
-	/// <summary> プレイヤー </summary>
-	private TRPlayer m_Player = null;
-
-	public GameObject PlayerTemplate; // TODO: AssetBundle
-
-	/// <summary>
-	/// 生成
-	/// </summary>
-	protected void Awake()
-	{
-		if (m_Instance != null)
-		{
-			Destroy(m_Instance);
-		}
-		m_Instance = this;
-
-		TRPanelBlock.Size = m_Config.GridSize;
-	}
-
-	/// <summary>
-	/// 開始
-	/// </summary>
-	protected void Start()
-	{
-		StartCoroutine(InitGame());
-	}
-
-	/// <summary>
-	/// ゲーム初期化
-	/// </summary>
-	private IEnumerator InitGame()
-	{
-		m_Player = Instantiate(PlayerTemplate).GetComponent<TRPlayer>();
-		m_Player.Initialize();
-
-		yield return null;
-
-		StartCoroutine(GameLoop());
-	}
-	/// <summary>
-	/// ゲームループ
-	/// </summary>
-	private IEnumerator GameLoop()
-	{
-		m_Player.Process();
-
-		yield return null;
-
-		StartCoroutine(GameLoop());
-	}
-
-	/// <summary>
-	/// プレイヤー
-	/// </summary>
-	public static TRPlayer Player
-	{
-		get { return m_Instance.m_Player; }
-	}
+	private static TRConfig m_Config = null;
 
 	/// <summary>
 	/// コンフィグ
 	/// </summary>
 	public static TRConfig Config
 	{
-		get { return m_Instance.m_Config; }
+		get
+		{
+			if (m_Config == null)
+			{
+				m_Config = Resources.Load<TRConfig>("Configs/TRConfig");
+			}
+			return m_Config;
+		}
+	}
+
+	/// <summary> プレイエリア </summary>
+	public TRPlayArea PlayArea { get; private set; }
+	
+	public GameObject PlayerTemplate; // TODO: AssetBundle
+	public GameObject PlayAreaTemplate; // TODO: AssetBundle
+
+	/// <summary>
+	/// 生成
+	/// </summary>
+	protected void Awake()
+	{
+		TRPanelBlock.Size = Config.GridSize;
+	}
+
+	/// <summary>
+	/// 初期化
+	/// </summary>
+	public override void Initialize(PlayerController pc)
+	{
+		base.Initialize(pc);
+
+		Player = Instantiate(PlayerTemplate).GetComponent<TRPlayer>();
+		PlayArea = Instantiate(PlayAreaTemplate).GetComponent<TRPlayArea>();
+
+		Player.Initialize(this);
+		PlayArea.Initialize(this);
+
+		if (!PC.isLocalPlayer)
+		{
+			PlayArea.transform.position += Vector3.right * 10f;
+		}
+	}
+
+	/// <summary>
+	/// 更新
+	/// </summary>
+	public override void Process()
+	{
+		PlayArea.Process();
 	}
 }

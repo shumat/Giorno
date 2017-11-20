@@ -4,21 +4,30 @@ using UnityEngine;
 
 public class PlayerBase : MonoBehaviour
 {
-	/// <summary>
-	/// 一時停止中
-	/// </summary>
+	/// <summary> ゲーム </summary>
+	public GameBase Game { get; protected set; }
+
+	/// <summary> 一時停止中 </summary>
 	public bool IsPause { get; protected set; }
+
+	/// <summary> コマンド </summary>
+	private PlayerController.CommandData m_NextCommand;
 
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	public virtual void Initialize(){}
+	public virtual void Initialize(GameBase game)
+	{
+		Game = game;
+	}
 
 	/// <summary>
-	/// メイン処理
+	/// 更新
 	/// </summary>
-	public virtual void Process()
+	public virtual PlayerController.CommandData Process()
 	{
+		m_NextCommand.Clear();
+
 		if (IsPause)
 		{
 			OnPause();
@@ -27,10 +36,12 @@ public class PlayerBase : MonoBehaviour
 		{
 			Play();
 		}
+
+		return m_NextCommand;
 	}
 
 	/// <summary>
-	/// 更新
+	/// 操作更新
 	/// </summary>
 	public virtual void Play(){}
 
@@ -40,19 +51,15 @@ public class PlayerBase : MonoBehaviour
 	public virtual void OnPause(){}
 
 	/// <summary>
-	/// フレーム更新
+	/// コマンド登録
 	/// </summary>
-	public virtual void StepUpdate()
+	public virtual void SetNextCommand(PlayerController.CommandData command)
 	{
-		IsPause = true;
-		Play();
+		m_NextCommand = command;
 	}
 
 	/// <summary>
-	/// 一時停止
+	/// コマンド実行
 	/// </summary>
-	public virtual void SetPause(bool pause)
-	{
-		IsPause = pause;
-	}
+	public virtual void ExecuteCommand(PlayerController.CommandData command){}
 }

@@ -8,8 +8,6 @@ public class MatchingManager : MonoBehaviour
 {
 	/// <summary> メニュー </summary>
 	private ObjectSelector m_Menu = null;
-	/// <summary> オンラインメニュー </summary>
-	private GameObject m_OnlineMenu = null;
 
 	/// <summary> LANを使用 </summary>
 	private bool m_UseLocalNetwork = false;
@@ -103,7 +101,7 @@ public class MatchingManager : MonoBehaviour
 
 		// クライアントとして開始
 		nm.StartClient();
-		float connectWait = 5f;
+		float connectWait = 1f;
 		while (!nm.IsClientConnected() && connectWait > 0f)
 		{
 			connectWait -= Time.deltaTime;
@@ -136,6 +134,15 @@ public class MatchingManager : MonoBehaviour
 	public IEnumerator StartGame(bool online)
 	{
 		Debug.Log("Start game(" + (online ? "Online" : "Offline") + ")");
+
+		// オフライン対応のためPlayerのSpawnを待つ
+		while (NetworkGameManager.Instance.LocalPlayer == null)
+		{
+			yield return null;
+		}
+
+		// マッチ成功イベント
+		NetworkGameManager.Instance.LocalPlayer.OnMatchSucceed();
 
 		m_Menu.SelectByName(null);
 

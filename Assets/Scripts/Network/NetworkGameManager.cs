@@ -14,6 +14,9 @@ public class NetworkGameManager : NetworkManager
 	/// <summary> ローカルプレイヤー </summary>
 	public PlayerController LocalPlayer { get; private set; }
 
+	/// <summary> 同期カウント </summary>
+	public int SyncCount { get; set; }
+
 	/// <summary>
 	/// プレイヤー追加
 	/// </summary>
@@ -40,6 +43,11 @@ public class NetworkGameManager : NetworkManager
 	/// </summary>
 	public bool IsReadyUpdate(uint frame)
 	{
+		if (m_Players == null || m_Players.Count == 0)
+		{
+			return false;
+		}
+
 		foreach (PlayerController player in m_Players)
 		{
 			if (!player.IsReadyUpdate(frame))
@@ -64,6 +72,53 @@ public class NetworkGameManager : NetworkManager
 	public int PlayerCount
 	{
 		get { return m_Players.Count; }
+	}
+
+	/// <summary>
+	/// 更新
+	/// </summary>
+	protected void LateUpdate()
+	{
+		// 古いコマンドを破棄
+		uint? minFrame = null;
+		foreach (PlayerController player in m_Players)
+		{
+			if (minFrame == null || minFrame.Value > player.FrameCount)
+			{
+				minFrame = player.FrameCount;
+			}
+		}
+		if (minFrame != null && minFrame.Value > 0)
+		{
+			foreach (PlayerController player in m_Players)
+			{
+				player.RemoveCommand(minFrame.Value - 1);
+			}
+		}
+	}
+
+	/// <summary>
+	/// 同期待機
+	/// </summary>
+	public void StandbySync()
+	{
+		if (NetworkClient.active)
+		{
+			LocalPlayer.CmdStandbySync();
+		}
+	}
+
+	/// <summary>
+	/// 同期完了
+	/// </summary>
+	public bool IsCompleateSync()
+	{
+		if (SyncCount == m_Players.Count)
+		{
+			SyncCount = 0;
+			return true;
+		}
+		return false;
 	}
 
 	#endregion

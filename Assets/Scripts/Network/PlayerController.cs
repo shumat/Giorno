@@ -11,15 +11,29 @@ public class PlayerController : NetworkBehaviour
 	public struct CommandData
 	{
 		public byte type;
-		public byte value;
+		public int[] values;
 		public uint frame;
+
+		public void Clear()
+		{
+			type = 0;
+			values = null;
+			frame = 0;
+		}
 	}
 
-	/// <summary> ローカルフレーム </summary>
-	private uint m_LocalFrameCount = 0;
-	
-	/// <summary> グローバルフレーム </summary>
-	private uint m_GlobalFrameCount = 0;
+	/// <summary>
+	/// コマンドタイプ
+	/// </summary>
+	public enum CommandType
+	{
+		None,
+		TR_Move,
+		TR_Rotate,
+	}
+
+	/// <summary> フレーム </summary>
+	public uint FrameCount { get; private set; }
 
 	/// <summary> コマンドリスト </summary>
 	private List<CommandData> m_Commands = new List<CommandData>();
@@ -27,10 +41,18 @@ public class PlayerController : NetworkBehaviour
 	/// <summary> 予約コマンド </summary>
 	private CommandData m_PendingCommand;
 
+	/// <summary> ゲーム </summary>
+	public GameBase Game { get; private set; }
+
+	/// <summary> シード同期乱数 </summary>
+	public System.Random SyncRand { get; private set; }
+
+	public GameObject GameTemplate;
+
 	/// <summary>
-	/// 生成
+	/// 開始
 	/// </summary>
-	protected void Awake()
+	protected void Start()
 	{
 		NetworkGameManager.Instance.AddPlayerController(this);
 		name = "Player_" + NetworkGameManager.Instance.PlayerCount;
@@ -41,7 +63,10 @@ public class PlayerController : NetworkBehaviour
 	/// </summary>
 	protected void Update()
 	{
-		SyncUpdate();
+		if (Game != null)
+		{
+			SyncUpdate();
+		}
 	}
 
 	/// <summary>
@@ -52,52 +77,32 @@ public class PlayerController : NetworkBehaviour
 		// 自身の更新
 		if (isLocalPlayer)
 		{
-			CommandData command = new CommandData();
-
-			// コマンド
-			if (Input.GetMouseButton(0))
-			{
-				command.type = 1;
-				command.value = 5;
-			}
-
-			// 古いデータを消す
-			for (int i = 0; i < m_Commands.Count; i++)
-			{
-				if (m_Commands[i].frame < m_LocalFrameCount)
-				{
-					m_Commands.RemoveAt(i--);
-				}
-			}
+			// プレイヤー操作
+			CommandData command = Game.Player.Process();
 
 			// コマンド送信
-			SendCommand(command, ++m_LocalFrameCount);
+			SendCommand(command, FrameCount);
 
 			// 即実行
-			ExecuteCommand(m_LocalFrameCount);
+			ExecuteCommand(FrameCount);
 
 			// ゲーム更新
+			Game.Process();
+
+			++FrameCount;
 		}
 		// 相手側の更新(同期待ちする)
 		else
 		{
-			//// フレーム更新
-			//while (NetworkGameManager.Instance.IsReadyUpdate(m_GlobalFrameCount))
-			//{
-			//	// 古いデータを消す
-			//	for (int i = 0; i < m_Commands.Count; i++)
-			//	{
-			//		if (m_Commands[i].frame < m_GlobalFrameCount)
-			//		{
-			//			m_Commands.RemoveAt(i--);
-			//		}
-			//	}
+			// フレーム更新
+			while (NetworkGameManager.Instance.IsReadyUpdate(FrameCount))
+			{
+				// コマンド実行
+				ExecuteCommand(FrameCount++);
 
-			//	// コマンド実行
-			//	ExecuteCommand(++m_GlobalFrameCount);
-
-			//	// ゲーム更新
-			//}
+				// ゲーム更新
+				Game.Process();
+			}
 		}
 	}
 
@@ -106,14 +111,9 @@ public class PlayerController : NetworkBehaviour
 	/// </summary>
 	public bool IsReadyUpdate(uint frame)
 	{
-		if (m_Commands.Count == 0)
-		{
-			return true;
-		}
-
 		for (int i = 0; i < m_Commands.Count; i++)
 		{
-			if (m_Commands[i].frame >= frame)
+			if (m_Commands[i].frame == frame)
 			{
 				return true;
 			}
@@ -126,17 +126,30 @@ public class PlayerController : NetworkBehaviour
 	/// </summary>
 	private void ExecuteCommand(uint frame)
 	{
-		// 古いデータを消す
+		// フレームのコマンドを実行
+		int index = m_Commands.FindIndex(x => x.frame == frame);
+		if (index >= 0)
+		{
+			Game.Player.ExecuteCommand(m_Commands[index]);
+		}
+	}
+
+	/// <summary>
+	/// コマンドを破棄
+	/// </summary>
+	public void RemoveCommand(uint frame)
+	{
 		for (int i = 0; i < m_Commands.Count; i++)
 		{
 			if (m_Commands[i].frame < frame)
 			{
 				m_Commands.RemoveAt(i--);
 			}
+			else
+			{
+				break;
+			}
 		}
-
-		CommandData command = m_Commands.Find(x => x.frame == frame);
-		Debug.Log(name + "[" + frame + "] " + command.type + "(" + command.value + ")");
 	}
 
 	/// <summary>
@@ -182,6 +195,71 @@ public class PlayerController : NetworkBehaviour
 		if (!isLocalPlayer)
 		{
 			m_Commands.Add(command);
+		}
+	}
+
+	/// <summary>
+	/// マッチ成功イベント
+	/// </summary>
+	public void OnMatchSucceed()
+	{
+		if (NetworkClient.active && isLocalPlayer)
+		{
+			CmdRandomSeed((int)(Random.value * int.MaxValue));
+		}
+	}
+
+	/// <summary>
+	/// 乱数シード送信
+	/// </summary>
+	[Command(channel=Channels.DefaultReliable)]
+	private void CmdRandomSeed(int seed)
+	{
+		RpcRandomSeed(seed);
+	}
+
+	/// <summary>
+	/// 乱数シード受信
+	/// </summary>
+	[ClientRpc(channel=Channels.DefaultReliable)]
+	private void RpcRandomSeed(int seed)
+	{
+		SyncRand = new System.Random(seed);
+	}
+
+	/// <summary>
+	/// 同期待機送信
+	/// </summary>
+	[Command(channel=Channels.DefaultReliable)]
+	public void CmdStandbySync()
+	{
+		RpcStandbySync();
+	}
+	
+	/// <summary>
+	/// 同期待機受信
+	/// </summary>
+	[ClientRpc(channel=Channels.DefaultReliable)]
+	private void RpcStandbySync()
+	{
+		++NetworkGameManager.Instance.SyncCount;
+	}
+
+	/// <summary>
+	/// ゲーム開始
+	/// </summary>
+	public void BeginGame(GameBase.GameMode mode)
+	{
+		switch (mode)
+		{
+			case GameBase.GameMode.MagicalDrop:
+				break;
+			case GameBase.GameMode.PanelDePon:
+				break;
+			case GameBase.GameMode.Tetris:
+				Game = Instantiate(GameTemplate).GetComponent<TRGame>();
+				Game.Initialize(this);
+				break;
 		}
 	}
 }

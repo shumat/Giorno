@@ -15,4 +15,23 @@ public class GameBase : MonoBehaviour
 		PanelDePon,
 		Tetris,
 	}
+
+	/// <summary> プレイヤーコントローラ </summary>
+	public PlayerController PC { get; protected set; }
+
+	/// <summary> プレイヤー </summary>
+	public PlayerBase Player { get; protected set; }
+	
+	/// <summary>
+	/// 初期化
+	/// </summary>
+	public virtual void Initialize(PlayerController pc)
+	{
+		PC = pc;
+	}
+
+	/// <summary>
+	/// 更新
+	/// </summary>
+	public virtual void Process(){}
 }

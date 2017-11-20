@@ -33,9 +33,9 @@ public class PPPlayer : PlayerBase
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	public override void Initialize()
+	public override void Initialize(GameBase game)
 	{
-		base.Initialize();
+		base.Initialize(game);
 
 		m_PlayArea.Initialize();
 		m_PlayArea.BeginUpdate();
