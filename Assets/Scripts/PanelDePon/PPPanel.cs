@@ -46,12 +46,15 @@ public class PPPanel : MonoBehaviour
 	/// <summary> ステート </summary>
 	private State m_State = State.None;
 
+	/// <summary> プレイ中のコルーチン </summary>
+	private IEnumerator m_PlayingCoroutine = null;
+
+	/// <summary> 落下待機コルーチン </summary>
+	private IEnumerator m_FallWaitCoroutine = null;
+
 	/// <summary> アクティブ </summary>
 	private bool m_Active = false;
 
-	/// <summary> 落下待機中 </summary>
-	private bool m_IsFallWait = false;
-	
 	/// <summary> 連鎖ソース? </summary>
 	public bool m_IsChainSource = false;
 
@@ -100,9 +103,10 @@ public class PPPanel : MonoBehaviour
 		m_Block = null;
 		m_State = State.None;
 		m_Active = false;
-		m_IsFallWait = false;
 		m_IsChainSource = false;
 		IgnoreChainSource = false;
+
+		m_FallWaitCoroutine = null;
 
 		List<Type> validTypes = new List<Type>();
 		for (int i = (int)Type.ColorA; i <= (int)Type.ColorF; i++)
@@ -112,7 +116,7 @@ public class PPPanel : MonoBehaviour
 				validTypes.Add((Type)i);
 			}
 		}
-		m_Type = validTypes[Random.Range(0, validTypes.Count)];
+		m_Type = validTypes[area.Game.PC.SyncRand.Next(validTypes.Count)];
 
 		m_SpriteRenderer.enabled = true;
 		m_SpriteRenderer.sprite = Resources.Load("PanelDePon/Panel_0" + ((int)m_Type - 1).ToString(), typeof(Sprite)) as Sprite;
@@ -144,7 +148,7 @@ public class PPPanel : MonoBehaviour
 		if (m_State == State.None)
 		{
 			m_State = State.Move;
-			StartCoroutine(Swaping(target));
+			StartCoroutine(m_PlayingCoroutine = Swaping(target));
 		}
 	}
 
@@ -169,6 +173,7 @@ public class PPPanel : MonoBehaviour
 		}
 
 		m_State = State.None;
+		m_PlayingCoroutine = null;
 	}
 
 	/// <summary>
@@ -176,9 +181,9 @@ public class PPPanel : MonoBehaviour
 	/// </summary>
 	public void BeginFallReady(PPPanelBlock startBlock, PPPanelBlock fallTarget)
 	{
-		if (m_State == State.None && !m_IsFallWait)
+		if (m_State == State.None && !IsFallWait)
 		{
-			StartCoroutine(FallReady(startBlock, fallTarget));
+			StartCoroutine(m_FallWaitCoroutine = FallReady(startBlock, fallTarget));
 		}
 	}
 
@@ -187,8 +192,6 @@ public class PPPanel : MonoBehaviour
 	/// </summary>
 	public IEnumerator FallReady(PPPanelBlock startBlock, PPPanelBlock fallTarget)
 	{
-		m_IsFallWait = true;
-
 		// 連鎖ソース
 		if (!IgnoreChainSource)
 		{
@@ -209,7 +212,7 @@ public class PPPanel : MonoBehaviour
 			BeginFall(startBlock, fallTarget);
 		}
 
-		m_IsFallWait = false;
+		m_FallWaitCoroutine = null;
 	}
 
 	/// <summary>
@@ -220,7 +223,7 @@ public class PPPanel : MonoBehaviour
 		if (m_State == State.None)
 		{
 			m_State = State.Fall;
-			StartCoroutine(Falling(startBlock, fallTarget));
+			StartCoroutine(m_PlayingCoroutine = Falling(startBlock, fallTarget));
 
 			// 1つ上のパネルも落下
 			PPPanelBlock upBlock = startBlock.GetLink(PlayAreaBlock.Dir.Up) as PPPanelBlock;
@@ -293,6 +296,7 @@ public class PPPanel : MonoBehaviour
 		}
 
 		m_State = State.None;
+		m_PlayingCoroutine = null;
 	}
 
 	/// <summary>
@@ -303,7 +307,7 @@ public class PPPanel : MonoBehaviour
 		if (m_State == State.None)
 		{
 			m_State = State.Vanish;
-			StartCoroutine(Vanishing(delay, endTime));
+			StartCoroutine(m_PlayingCoroutine = Vanishing(delay, endTime));
 		}
 	}
 
@@ -323,11 +327,22 @@ public class PPPanel : MonoBehaviour
 		}
 
 		m_SpriteRenderer.color = Color.gray;
-		yield return new WaitForSeconds(delay);
+
+		float wait = delay;
+		while (wait > 0)
+		{
+			wait -= Time.deltaTime;
+			yield return null;
+		}
 
 		m_SpriteRenderer.enabled = false;
-
-		yield return new WaitForSeconds(endTime - delay);
+		
+		wait = endTime - delay;
+		while (wait > 0)
+		{
+			wait -= Time.deltaTime;
+			yield return null;
+		}
 
 		m_Area.RequestRemovePanel(this);
 		//m_Block.Detach();
@@ -335,7 +350,38 @@ public class PPPanel : MonoBehaviour
 		m_State = State.None;
 		m_SpriteRenderer.color = Color.white;
 
+		m_PlayingCoroutine = null;
 		gameObject.SetActive(false);
+	}
+
+	/// <summary>
+	/// 一時停止
+	/// </summary>
+	public void BeginPause()
+	{
+		if (m_PlayingCoroutine != null)
+		{
+			StopCoroutine(m_PlayingCoroutine);
+		}
+		if (m_FallWaitCoroutine != null)
+		{
+			StopCoroutine(m_FallWaitCoroutine);
+		}
+	}
+
+	/// <summary>
+	/// 一時停止終了
+	/// </summary>
+	public void EndPause()
+	{
+		if (m_PlayingCoroutine != null)
+		{
+			StartCoroutine(m_PlayingCoroutine);
+		}
+		if (m_FallWaitCoroutine != null)
+		{
+			StartCoroutine(m_FallWaitCoroutine);
+		}
 	}
 
 	/// <summary>
@@ -363,7 +409,7 @@ public class PPPanel : MonoBehaviour
 		set
 		{
 			// 落下中か消滅中は変更不可
-			if (m_State != State.Fall && m_State != State.Vanish && !m_IsFallWait)
+			if (m_State != State.Fall && m_State != State.Vanish && !IsFallWait)
 			{
 				m_IsChainSource = value;
 			}
@@ -400,6 +446,6 @@ public class PPPanel : MonoBehaviour
 	/// </summary>
 	public bool IsFallWait
 	{
-		get { return m_IsFallWait; }
+		get { return m_FallWaitCoroutine != null; }
 	}
 }

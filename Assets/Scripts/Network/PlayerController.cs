@@ -28,9 +28,14 @@ public class PlayerController : NetworkBehaviour
 	public enum CommandType
 	{
 		None,
+
 		MD_Push,
 		MD_Pull,
 		MD_Add,
+
+		PP_Swap,
+		PP_Add,
+
 		TR_Move,
 		TR_Rotate,
 	}
@@ -91,7 +96,7 @@ public class PlayerController : NetworkBehaviour
 		if (isLocalPlayer)
 		{
 			// ステップ実行
-			if (Input.GetKey(KeyCode.LeftShift) && !Input.GetKeyDown(KeyCode.Space))
+			if (Input.GetKey(KeyCode.LeftControl) && !Input.GetKeyDown(KeyCode.Space))
 			{
 				return;
 			}
@@ -295,6 +300,9 @@ public class PlayerController : NetworkBehaviour
 				break;
 
 			case GameBase.GameMode.PanelDePon:
+				obj = Resources.Load<GameObject>("PanelDePon/PPGame");
+				Game = Instantiate(obj).GetComponent<PPGame>();
+				Game.Initialize(this);
 				break;
 
 			case GameBase.GameMode.Tetris:

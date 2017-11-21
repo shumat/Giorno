@@ -4,9 +4,6 @@ using UnityEngine;
 
 public class PPPlayer : PlayerBase
 {
-	/// <summary> プレイエリア </summary>
-	private PPPlayArea m_PlayArea = null;
-
 	/// <summary> タッチしたブロック </summary>
 	private PPPanelBlock m_TouchedBlock = null;
 
@@ -16,18 +13,17 @@ public class PPPlayer : PlayerBase
 	private float m_TouchTime = 0f;
 
 	/// <summary> ゲームレベル </summary>
-	private int m_GameLevel = 0;
+	public int GameLevel { get; private set; }
 
 	/// <summary> キャラクター </summary>
-	private Character m_Character = null;
+	//private Character m_Character = null;
 
 	/// <summary>
 	/// 生成
 	/// </summary>
 	protected void Awake()
 	{
-		m_PlayArea = FindObjectOfType<PPPlayArea>();
-		m_Character = FindObjectOfType<Character>();
+		//m_Character = FindObjectOfType<Character>();
 	}
 
 	/// <summary>
@@ -36,11 +32,7 @@ public class PPPlayer : PlayerBase
 	public override void Initialize(GameBase game)
 	{
 		base.Initialize(game);
-
-		m_PlayArea.Initialize();
-		m_PlayArea.BeginUpdate();
-
-		m_Character.Initialize(GameManager.Instance.PlayerCharacterId);
+		//m_Character.Initialize(GameManager.Instance.PlayerCharacterId);
 	}
 
 	/// <summary>
@@ -50,9 +42,7 @@ public class PPPlayer : PlayerBase
 	{
 		base.Play();
 
-		// せり上げスピード登録
-		m_PlayArea.ElevateValue = PPGame.Config.AutoElevateValue;
-		m_PlayArea.MaxElevateWaitTime = PPGame.Config.GetAutoElevateInterval(m_GameLevel);
+		PPPlayArea playArea = (Game as PPGame).PlayArea;
 
 		// タッチした瞬間
 		if (InputManager.IsTouchDown())
@@ -61,7 +51,7 @@ public class PPPlayer : PlayerBase
 			m_TouchTime = 0;
 
 			// タッチブロック保持
-			m_TouchedBlock = m_PlayArea.GetHitBlock(m_TouchStartPos);
+			m_TouchedBlock = playArea.GetHitBlock(m_TouchStartPos);
 		}
 
 		// タッチ中
@@ -71,9 +61,7 @@ public class PPPlayer : PlayerBase
 			m_TouchTime += Time.deltaTime;
 			if (m_TouchTime > PPGame.Config.ElevateStartTouchTime)
 			{
-				m_PlayArea.ElevateValue = PPGame.Config.ManualElevateSpeed;
-				m_PlayArea.MaxElevateWaitTime = PPGame.Config.ManualElevateInterval;
-				m_PlayArea.SkipElevateWait();
+				Elevate();
 			}
 			// 入れ替え
 			else if (m_TouchedBlock != null)
@@ -108,11 +96,65 @@ public class PPPlayer : PlayerBase
 					// 交換
 					if (doSwap)
 					{
-						m_PlayArea.SwapPanel(m_TouchedBlock, dir);
+						SwapPanel(m_TouchedBlock, dir);
 						m_TouchedBlock = null;
 					}
 				}
 			}
+		}
+	}
+
+	/// <summary>
+	/// パネル入れ替え
+	/// </summary>
+	private void SwapPanel(PPPanelBlock block, PlayAreaBlock.Dir dir)
+	{
+		PlayerController.CommandData command = new PlayerController.CommandData();
+		command.type =  (byte)PlayerController.CommandType.PP_Swap;
+		command.values = new int[2];
+		Vector2i grid = (Game as PPGame).PlayArea.GetBlockGrid(block);
+		command.values[0] = grid.y * PPGame.Config.PlayAreaWidth + grid.x;
+		command.values[1] = (int)dir;
+		SetNextCommand(command);
+	}
+
+	/// <summary>
+	/// せり上げ
+	/// </summary>
+	private void Elevate()
+	{
+		PlayerController.CommandData command = new PlayerController.CommandData();
+		command.type =  (byte)PlayerController.CommandType.PP_Add;
+		SetNextCommand(command);
+	}
+
+	/// <summary>
+	/// コマンド実行
+	/// </summary>
+	public override void ExecuteCommand(PlayerController.CommandData command)
+	{
+		PPPlayArea playArea = (Game as PPGame).PlayArea;
+
+		if (!Game.PC.isLocalPlayer)
+		{
+			Debug.Log(command.type);
+		}
+
+		switch ((PlayerController.CommandType)command.type)
+		{
+			case PlayerController.CommandType.PP_Swap:
+				if (command.values != null)
+				{
+					Vector2i grid = new Vector2i(command.values[0] % PPGame.Config.PlayAreaWidth, command.values[0] / PPGame.Config.PlayAreaWidth);
+					playArea.SwapPanel(playArea.GetBlock(grid), (PlayAreaBlock.Dir)command.values[1]);
+				}
+				break;
+
+			case PlayerController.CommandType.PP_Add:
+				playArea.ElevateValue = PPGame.Config.ManualElevateSpeed;
+				playArea.MaxElevateWaitTime = PPGame.Config.ManualElevateInterval;
+				playArea.SkipElevateWait();
+				break;
 		}
 	}
 
@@ -132,20 +174,20 @@ public class PPPlayer : PlayerBase
 	/// </summary>
 	public IEnumerator ChainAppeal(int chainCount)
 	{
-		m_Character.Visible = true;
-		m_Character.PlayAnim("Chain_0");
+		//m_Character.Visible = true;
+		//m_Character.PlayAnim("Chain_0");
 
-		m_Character.ShowChain(true, chainCount + 1);
+		//m_Character.ShowChain(true, chainCount + 1);
 
-		yield return null;
+		//yield return null;
 
-		while (!m_Character.IsAnimStoped())
-		{
-			yield return null;
-		}
+		//while (!m_Character.IsAnimStoped())
+		//{
+		//	yield return null;
+		//}
 
-		m_Character.Visible = false;
-		m_Character.ShowChain(false, 0);
+		//m_Character.Visible = false;
+		//m_Character.ShowChain(false, 0);
 
 		yield return null;
 	}
@@ -160,7 +202,7 @@ public class PPPlayer : PlayerBase
 		styleState.textColor = Color.white;
 		style.fontSize = 50;
 		style.normal = styleState;
-		int chainCount = m_PlayArea.ChainCount;
+		int chainCount = (Game as PPGame).PlayArea.ChainCount;
 		if (chainCount > 0)
 		{
 			chainCount++;

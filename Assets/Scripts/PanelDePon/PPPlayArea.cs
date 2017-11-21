@@ -18,6 +18,9 @@ public class PPPlayArea : MonoBehaviour
 	/// <summary> ブロックハーフサイズ </summary>
 	public float BlockHalfSize { get { return BlockSize * 0.5f; } }
 
+	/// <summary> ゲーム </summary>
+	public PPGame Game { get; private set; }
+
 	/// <summary> ブロック親オブジェクト </summary>
 	private GameObject m_BlockParent = null;
 	/// <summary> ブロック親オブジェクト初期座標 </summary>
@@ -26,6 +29,8 @@ public class PPPlayArea : MonoBehaviour
 	/// <summary> ライン </summary>
 	private List<PPPanelBlock[]> m_Lines = new List<PPPanelBlock[]>();
 
+	/// <summary> 全パネル </summary>
+	private List<PPPanel> m_Panels = new List<PPPanel>();
 	/// <summary> 使用中パネル </summary>
 	private List<PPPanel> m_UsingPanels = new List<PPPanel>();
 	/// <summary> 未使用パネル </summary>
@@ -63,8 +68,10 @@ public class PPPlayArea : MonoBehaviour
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	public void Initialize()
+	public void Initialize(PPGame game)
 	{
+		Game = game;
+
 		m_Height = PPGame.Config.PlayAreaHeight;
 		m_Width = PPGame.Config.PlayAreaWidth;
 
@@ -83,18 +90,11 @@ public class PPPlayArea : MonoBehaviour
 	}
 
 	/// <summary>
-	/// 更新開始
-	/// </summary>
-	public void BeginUpdate()
-	{
-		StartCoroutine(OnUpdate());
-	}
-
-	/// <summary>
 	/// 更新
 	/// </summary>
-	private IEnumerator OnUpdate()
+	public void Process()
 	{
+		// パネル除外
 		RemovePanel();
 
 		// パネル消滅
@@ -108,10 +108,28 @@ public class PPPlayArea : MonoBehaviour
 
 		// せり上げ
 		Elevate();
+	}
 
-		yield return null;
-
-		StartCoroutine(OnUpdate());
+	/// <summary>
+	/// コルーチン再生
+	/// </summary>
+	public void StartPlayingCoroutine()
+	{
+		foreach (PPPanel panel in m_Panels)
+		{
+			panel.EndPause();
+		}
+	}
+	
+	/// <summary>
+	/// コルーチン停止
+	/// </summary>
+	public void StopPlayingCoroutine()
+	{
+		foreach (PPPanel panel in m_Panels)
+		{
+			panel.BeginPause();
+		}
 	}
 
 	/// <summary>
@@ -191,7 +209,7 @@ public class PPPlayArea : MonoBehaviour
 			if (m_ChainCount > 0)
 			{
 				m_ElevateStopTime = PPGame.Config.GetElevateStopTime(m_ChainCount);
-				PPGame.Player.ChainEvent(m_ChainCount);
+				(Game.Player as PPPlayer).ChainEvent(m_ChainCount);
 			}
 
 			m_ChainCount = 0;
@@ -418,6 +436,7 @@ public class PPPlayArea : MonoBehaviour
 			{
 				panel = Instantiate(PanelTemplate).GetComponent<PPPanel>();
 				panel.gameObject.transform.SetParent(m_BlockParent.transform);
+				m_Panels.Add(panel);
 			}
 
 			// 無効タイプ設定のため左側だけ接続
@@ -524,6 +543,34 @@ public class PPPlayArea : MonoBehaviour
 			}
 		}
 		return null;
+	}
+
+	/// <summary>
+	/// ブロックのグリッド座標を取得
+	/// </summary>
+	public Vector2i GetBlockGrid(PPPanelBlock block)
+	{
+		for (int y = 0; y < m_Lines.Count; y++)
+		{
+			for (int x = 0; x < m_Lines[y].Length; x++)
+			{
+				if (m_Lines[y][x] == block)
+				{
+					return new Vector2i(x, y);
+				}
+			}
+		}
+
+		Debug.LogWarning(block.ToString() + " is not found");
+		return Vector2i.zero;
+	}
+
+	/// <summary>
+	/// グリッド座標からブロックを取得
+	/// </summary>
+	public PPPanelBlock GetBlock(Vector2i grid)
+	{
+		return m_Lines[grid.y][grid.x];
 	}
 
 	/// <summary>

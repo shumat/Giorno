@@ -5,81 +5,70 @@ using UnityEngine;
 public class PPGame : GameBase
 {
 	/// <summary> コンフィグ </summary>
-	[SerializeField]
-	private PPConfig m_Config = null;
-
-	/// <summary> インスタンス </summary>
-	private static PPGame m_Instance = null;
-
-	/// <summary> プレイヤー </summary>
-	private PPPlayer m_Player = null;
-
-	/// <summary>
-	/// 生成
-	/// </summary>
-	protected void Awake()
-	{
-		if (m_Instance != null)
-		{
-			Destroy(m_Instance);
-		}
-		m_Instance = this;
-	}
-
-	/// <summary>
-	/// 開始
-	/// </summary>
-	protected void Start()
-	{
-		StartCoroutine(InitGame());
-	}
-
-	/// <summary>
-	/// ゲーム初期化
-	/// </summary>
-	private IEnumerator InitGame()
-	{
-		GameObject obj = new GameObject();
-		m_Player = obj.AddComponent<PPPlayer>();
-		m_Player.name = "Player";
-		m_Player.Initialize(this);
-
-		yield return null;
-
-		StartCoroutine(GameLoop());
-	}
-	/// <summary>
-	/// ゲームループ
-	/// </summary>
-	private IEnumerator GameLoop()
-	{
-//		if (m_Player.IsPause)
-//		{
-//			m_Player.OnPause();
-//		}
-//		else
-//		{
-			m_Player.Play();
-//		}
-
-		yield return null;
-
-		StartCoroutine(GameLoop());
-	}
-
-	/// <summary>
-	/// プレイヤー
-	/// </summary>
-	public static PPPlayer Player
-	{
-		get { return m_Instance.m_Player; }
-	}
+	private static PPConfig m_Config = null;
 
 	/// <summary>
 	/// コンフィグ
 	/// </summary>
 	public static PPConfig Config
 	{
-		get { return m_Instance.m_Config; }
+		get
+		{
+			if (m_Config == null)
+			{
+				m_Config = Resources.Load<PPConfig>("Configs/PPConfig");
+			}
+			return m_Config;
+		}
+	}
+
+	/// <summary> プレイエリア </summary>
+	public PPPlayArea PlayArea { get; private set; }
+	
+	public GameObject PlayerTemplate; // TODO: AssetBundle
+	public GameObject PlayAreaTemplate; // TODO: AssetBundle
+
+	/// <summary>
+	/// 初期化
+	/// </summary>
+	public override void Initialize(PlayerController pc)
+	{
+		base.Initialize(pc);
+
+		Player = Instantiate(PlayerTemplate).GetComponent<PPPlayer>();
+		PlayArea = Instantiate(PlayAreaTemplate).GetComponent<PPPlayArea>();
+
+		Player.Initialize(this);
+		PlayArea.Initialize(this);
+
+		if (!PC.isLocalPlayer)
+		{
+			PlayArea.transform.position += Vector3.right * 10f;
+		}
+	}
+
+	/// <summary>
+	/// フレーム開始時の更新
+	/// </summary>
+	public override void FirstProcess()
+	{
+		// せり上げスピード登録
+		PlayArea.ElevateValue = PPGame.Config.AutoElevateValue;
+		PlayArea.MaxElevateWaitTime = PPGame.Config.GetAutoElevateInterval((Player as PPPlayer).GameLevel);
+
+		// コルーチン再生
+		PlayArea.StartPlayingCoroutine();
+	}
+
+	/// <summary>
+	/// 更新
+	/// </summary>
+	public override void Process()
+	{
+		// エリア更新
+		PlayArea.Process();
+
+		// コルーチン停止
+		PlayArea.StopPlayingCoroutine();
 	}
 }
