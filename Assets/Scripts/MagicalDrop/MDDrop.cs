@@ -168,8 +168,7 @@ public class MDDrop : MonoBehaviour
 		if (m_State == State.None)
 		{
 			m_State = State.Vanish;
-			m_PlayingCoroutine = Vanishing();
-			StartCoroutine(m_PlayingCoroutine);
+			StartCoroutine(m_PlayingCoroutine = Vanishing());
 		}
 	}
 
@@ -205,6 +204,7 @@ public class MDDrop : MonoBehaviour
 		gameObject.SetActive(false);
 
 		m_State = State.None;
+		m_PlayingCoroutine = null;
 	}
 
 	/// <summary>
@@ -215,8 +215,7 @@ public class MDDrop : MonoBehaviour
 		if (m_State == State.None)
 		{
 			m_State = State.Close;
-			m_PlayingCoroutine = Pushing(null);
-			StartCoroutine(m_PlayingCoroutine);
+			StartCoroutine(m_PlayingCoroutine = Pushing(null));
 		}
 	}
 
@@ -228,8 +227,7 @@ public class MDDrop : MonoBehaviour
 		if (m_State == State.None)
 		{
 			m_State = State.Pull;
-			m_PlayingCoroutine = Pulling(player);
-			StartCoroutine(m_PlayingCoroutine);
+			StartCoroutine(m_PlayingCoroutine = Pulling(player));
 		}
 	}
 
@@ -270,6 +268,7 @@ public class MDDrop : MonoBehaviour
 
 		m_SpriteRenderer.enabled = false;
 		m_State = State.None;
+		m_PlayingCoroutine = null;
 	}
 
 	/// <summary>
@@ -280,8 +279,7 @@ public class MDDrop : MonoBehaviour
 		if (m_State == State.None)
 		{
 			m_State = State.Push;
-			m_PlayingCoroutine = Pushing(startPosition);
-			StartCoroutine(m_PlayingCoroutine);
+			StartCoroutine(m_PlayingCoroutine = Pushing(startPosition));
 		}
 	}
 
@@ -321,6 +319,7 @@ public class MDDrop : MonoBehaviour
 		}
 
 		m_State = State.None;
+		m_PlayingCoroutine = null;
 		yield return null;
 	}
 
@@ -331,8 +330,7 @@ public class MDDrop : MonoBehaviour
 	{
 		if (m_ChangeCoroutine == null)
 		{
-			m_ChangeCoroutine = Changing(type);
-			StartCoroutine(m_ChangeCoroutine);
+			StartCoroutine(m_ChangeCoroutine = Changing(type));
 		}
 	}
 
@@ -377,7 +375,11 @@ public class MDDrop : MonoBehaviour
 		}
 
 		m_State = State.None;
-		StopCoroutine(m_PlayingCoroutine);
+		if (m_PlayingCoroutine != null)
+		{
+			StopCoroutine(m_PlayingCoroutine);
+			m_PlayingCoroutine = null;
+		}
 	}
 
 	/// <summary>
@@ -385,7 +387,7 @@ public class MDDrop : MonoBehaviour
 	/// </summary>
 	public void BeginPause()
 	{
-		if (m_State != State.None && m_PlayingCoroutine != null)
+		if (m_PlayingCoroutine != null)
 		{
 			StopCoroutine(m_PlayingCoroutine);
 		}
@@ -400,7 +402,7 @@ public class MDDrop : MonoBehaviour
 	/// </summary>
 	public void EndPause()
 	{
-		if (m_State != State.None && m_PlayingCoroutine != null)
+		if (m_PlayingCoroutine != null)
 		{
 			StartCoroutine(m_PlayingCoroutine);
 		}
