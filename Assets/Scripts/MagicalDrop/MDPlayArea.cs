@@ -5,25 +5,9 @@ using UnityEngine;
 public class MDPlayArea : MonoBehaviour
 {
 	/// <summary> 最大行数 </summary>
-	private int m_Height;
+	public int Height { get; private set; }
 	/// <summary> 最大列数 </summary>
-	private int m_Width;
-
-	/// <summary>
-	/// 最大列数
-	/// </summary>
-	public int Width
-	{
-		get { return m_Width; }
-	}
-
-	/// <summary>
-	/// 最大行数
-	/// </summary>
-	public int Height
-	{
-		get { return m_Height; }
-	}
+	public int Width { get; private set; }
 
 	/// <summary> サイズ </summary>
 	private Vector3 m_Size = Vector2.zero;
@@ -39,6 +23,9 @@ public class MDPlayArea : MonoBehaviour
 
 	/// <summary> ライン </summary>
 	private List<MDDropBlock[]> m_Lines = new List<MDDropBlock[]>();
+
+	/// <summary> 全ドロップ </summary>
+	private List<MDDrop> m_Drops = new List<MDDrop>();
 
 	/// <summary> 未使用ドロップ </summary>
 	private List<MDDrop> m_UnusedDrops = new List<MDDrop>();
@@ -57,10 +44,10 @@ public class MDPlayArea : MonoBehaviour
 	private float m_BlockParentDefaultY = 0f;
 
 	/// <summary> 連鎖数 </summary>
-	private int m_ChainCount = 0;
+	public int ChainCount { get; private set; }
 
 	/// <summary> 連鎖受付時間 </summary>
-	private float m_ChainReceiveTime = 0f;
+	public float ChainReceiveTime { get; private set; }
 
 	/// <summary> 自動ライン生成待機時間 </summary>
 	private float m_AutoLineCreateWaitTime = 0f;
@@ -89,13 +76,13 @@ public class MDPlayArea : MonoBehaviour
 	{
 		Game = game;
 
-		m_Height = MDGame.Config.PlayAreaHeight;
-		m_Width = MDGame.Config.PlayAreaWidth;
+		Height = MDGame.Config.PlayAreaHeight;
+		Width = MDGame.Config.PlayAreaWidth;
 
 		BlockSize = MDGame.Config.DropSize;
 
-		m_Size.x = m_Width * BlockSize;
-		m_Size.y = m_Height * BlockSize;
+		m_Size.x = Width * BlockSize;
+		m_Size.y = Height * BlockSize;
 
 		m_AutoLineCreateWaitTime = MDGame.Config.AutoLineCreateStartTime;
 
@@ -103,7 +90,7 @@ public class MDPlayArea : MonoBehaviour
 		GameObject backParent = transform.Find("Back").gameObject;
 		GameObject obj, template;
 		int backTemplateCount = backParent.transform.childCount;
-		for (int i = 0; i < m_Width; i++)
+		for (int i = 0; i < Width; i++)
 		{
 			template = backParent.transform.GetChild(i % backTemplateCount).gameObject;
 
@@ -148,7 +135,7 @@ public class MDPlayArea : MonoBehaviour
 		}
 
 		// 連鎖受付時間更新
-		m_ChainReceiveTime -= Time.deltaTime;
+		ChainReceiveTime -= Time.deltaTime;
 
 		// ライン更新
 		UpdateLine();
@@ -168,39 +155,28 @@ public class MDPlayArea : MonoBehaviour
 		// ゲームオーバー
 		if (IsLineOver())
 		{
-			BeginPause();
 		}
 	}
 
 	/// <summary>
-	/// 一時停止
+	/// コルーチン再生
 	/// </summary>
-	public void BeginPause()
+	public void StartPlayingCoroutine()
 	{
-		m_EnableUpdate = false;
-		foreach (Transform child in m_BlockParent.transform)
+		foreach (MDDrop drop in m_Drops)
 		{
-			MDDrop drop = child.GetComponent<MDDrop>();
-			if (drop != null)
-			{
-				drop.BeginPause();
-			}
+			drop.EndPause();
 		}
 	}
-
+	
 	/// <summary>
-	/// 一時停止終了
+	/// コルーチン停止
 	/// </summary>
-	public void EndPause()
+	public void StopPlayingCoroutine()
 	{
-		m_EnableUpdate = true;
-		foreach (Transform child in m_BlockParent.transform)
+		foreach (MDDrop drop in m_Drops)
 		{
-			MDDrop drop = child.GetComponent<MDDrop>();
-			if (drop != null)
-			{
-				drop.EndPause();
-			}
+			drop.BeginPause();
 		}
 	}
 
@@ -283,6 +259,7 @@ public class MDPlayArea : MonoBehaviour
 			{
 				drop = Instantiate(DropTemplate, transform).GetComponent<MDDrop>();
 				drop.transform.SetParent(m_BlockParent.transform);
+				m_Drops.Add(drop);
 			}
 
 			// 初期化
@@ -329,7 +306,7 @@ public class MDPlayArea : MonoBehaviour
 	/// </summary>
 	private void AddEmptyLine(bool insertHead)
 	{
-		MDDropBlock[] line = new MDDropBlock[m_Width];
+		MDDropBlock[] line = new MDDropBlock[Width];
 		Vector3 pos = Vector3.zero;
 		for (int i = 0; i < line.Length; i++)
 		{
@@ -399,7 +376,7 @@ public class MDPlayArea : MonoBehaviour
 				if (block.AttachedDrop != null && (block.AttachedDrop.CurrentState == MDDrop.State.Vanish || block.AttachedDrop.IsChanging))
 				{
 					// 連鎖受付時間リセット
-					m_ChainReceiveTime = MDGame.Config.MaxChainReceiveTime;
+					ChainReceiveTime = MDGame.Config.MaxChainReceiveTime;
 
 					return;
 				}
@@ -417,10 +394,10 @@ public class MDPlayArea : MonoBehaviour
 				drop.Block.GetMatchDrops(ref match, ref isAdjoinFrozen, drop.DropType);
 
 				// 連鎖数カウント
-				++m_ChainCount;
+				++ChainCount;
 
 				// 連鎖受付時間リセット
-				m_ChainReceiveTime = MDGame.Config.MaxChainReceiveTime;
+				ChainReceiveTime = MDGame.Config.MaxChainReceiveTime;
 			}
 			m_PendingVanishDrops.Clear();
 		}
@@ -452,10 +429,10 @@ public class MDPlayArea : MonoBehaviour
 							else
 							{
 								// 連鎖数カウント
-								++m_ChainCount;
+								++ChainCount;
 
 								// 連鎖受付時間リセット
-								m_ChainReceiveTime = MDGame.Config.MaxChainReceiveTime;
+								ChainReceiveTime = MDGame.Config.MaxChainReceiveTime;
 							}
 						}
 					}
@@ -515,10 +492,10 @@ public class MDPlayArea : MonoBehaviour
 		}
 
 		// 連鎖数リセット
-		if (needsResetChain && m_ChainReceiveTime <= 0f)
+		if (needsResetChain && ChainReceiveTime <= 0f)
 		{
 			(Game.Player as MDPlayer).ChainEvent(ChainCount);
-			m_ChainCount = 0;
+			ChainCount = 0;
 		}
 	}
 
@@ -592,7 +569,7 @@ public class MDPlayArea : MonoBehaviour
 	/// </summary>
 	public bool PullDrop(int row)
 	{
-		if (row < 0 || row >= m_Width || !IsValidPull(row))
+		if (row < 0 || row >= Width || !IsValidPull(row))
 		{
 			return false;
 		}
@@ -641,7 +618,7 @@ public class MDPlayArea : MonoBehaviour
 	/// </summary>
 	public void PushDrop(int row)
 	{
-		if (row < 0 || row >= m_Width || !IsValidPush())
+		if (row < 0 || row >= Width || !IsValidPush())
 		{
 			return;
 		}
@@ -768,22 +745,6 @@ public class MDPlayArea : MonoBehaviour
 			return m_Lines[0].Length - 1;
 		}
 		return -1;
-	}
-
-	/// <summary>
-	/// 連鎖数
-	/// </summary>
-	public int ChainCount
-	{
-		get { return m_ChainCount; }
-	}
-
-	/// <summary>
-	/// 連鎖受付時間
-	/// </summary>
-	public float ChainReceiveTime
-	{
-		get { return m_ChainReceiveTime; }
 	}
 
 	/// <summary>

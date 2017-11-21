@@ -90,6 +90,15 @@ public class PlayerController : NetworkBehaviour
 		// 自身の更新
 		if (isLocalPlayer)
 		{
+			// ステップ実行
+			if (Input.GetKey(KeyCode.LeftShift) && !Input.GetKeyDown(KeyCode.Space))
+			{
+				return;
+			}
+
+			// ゲーム更新
+			Game.FirstProcess();
+
 			// プレイヤー操作
 			CommandData command = Game.Player.Process();
 
@@ -110,6 +119,9 @@ public class PlayerController : NetworkBehaviour
 			// フレーム更新
 			while (NetworkGameManager.Instance.IsReadyUpdate(FrameCount))
 			{
+				// ゲーム更新
+				Game.FirstProcess();
+
 				// コマンド実行
 				ExecuteCommand(FrameCount++);
 

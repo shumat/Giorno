@@ -31,6 +31,11 @@ public class GameBase : MonoBehaviour
 	}
 
 	/// <summary>
+	/// フレーム開始時の更新
+	/// </summary>
+	public virtual void FirstProcess(){}
+
+	/// <summary>
 	/// 更新
 	/// </summary>
 	public virtual void Process(){}

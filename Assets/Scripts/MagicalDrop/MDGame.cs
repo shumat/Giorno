@@ -29,13 +29,6 @@ public class MDGame : GameBase
 	public GameObject PlayAreaTemplate; // TODO: AssetBundle
 
 	/// <summary>
-	/// 生成
-	/// </summary>
-	protected void Awake()
-	{
-	}
-
-	/// <summary>
 	/// 初期化
 	/// </summary>
 	public override void Initialize(PlayerController pc)
@@ -55,10 +48,23 @@ public class MDGame : GameBase
 	}
 
 	/// <summary>
+	/// フレーム開始時の更新
+	/// </summary>
+	public override void FirstProcess()
+	{
+		// コルーチン再生
+		PlayArea.StartPlayingCoroutine();
+	}
+
+	/// <summary>
 	/// 更新
 	/// </summary>
 	public override void Process()
 	{
+		// エリア更新
 		PlayArea.Process();
+
+		// コルーチン停止
+		PlayArea.StopPlayingCoroutine();
 	}
 }
