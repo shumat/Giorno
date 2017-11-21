@@ -253,7 +253,7 @@ public class PPPanel : MonoBehaviour
 		while (true)
 		{
 			// 落下地点の再計算
-			while (!curBlock.TestInsideY(transform.position.y) && curBlock.GetLink(PlayAreaBlock.Dir.Down) != null)
+			while (!curBlock.TestInsideY(transform.position.y, m_Area.BlockSize) && curBlock.GetLink(PlayAreaBlock.Dir.Down) != null)
 			{
 				curBlock = curBlock.GetLink(PlayAreaBlock.Dir.Down) as PPPanelBlock;
 			}

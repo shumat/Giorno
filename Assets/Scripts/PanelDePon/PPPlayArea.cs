@@ -12,6 +12,12 @@ public class PPPlayArea : MonoBehaviour
 	/// <summary> サイズ </summary>
 	private Vector3 m_Size = Vector2.zero;
 
+	/// <summary> ブロックサイズ </summary>
+	public float BlockSize { get; private set; }
+
+	/// <summary> ブロックハーフサイズ </summary>
+	public float BlockHalfSize { get { return BlockSize * 0.5f; } }
+
 	/// <summary> ブロック親オブジェクト </summary>
 	private GameObject m_BlockParent = null;
 	/// <summary> ブロック親オブジェクト初期座標 </summary>
@@ -62,8 +68,10 @@ public class PPPlayArea : MonoBehaviour
 		m_Height = PPGame.Config.PlayAreaHeight;
 		m_Width = PPGame.Config.PlayAreaWidth;
 
-		m_Size.x = m_Width * MDDropBlock.Size;
-		m_Size.y = m_Height * MDDropBlock.Size;
+		BlockSize = PPGame.Config.PanelSize;
+
+		m_Size.x = m_Width * BlockSize;
+		m_Size.y = m_Height * BlockSize;
 
 		// 適当に初期化
 		for (int i = 0; i < 5; i++)
@@ -71,7 +79,7 @@ public class PPPlayArea : MonoBehaviour
 			AddNewLine();
 		}
 
-		m_BlockParent.transform.position += Vector3.up * (PPPanelBlock.Size * 5 - PPPanelBlock.HalfSize);
+		m_BlockParent.transform.position += Vector3.up * (BlockSize * 5 - BlockHalfSize);
 	}
 
 	/// <summary>
@@ -205,8 +213,8 @@ public class PPPlayArea : MonoBehaviour
 				{
 					if (panel.IsFalling())
 					{
-						if ((block.TestInsideY(panel.transform.position.y) && block.TestInsideX(panel.transform.position.x, false)) ||
-							(target.TestInsideY(panel.transform.position.y) && target.TestInsideX(panel.transform.position.x, false)))
+						if ((block.TestInsideY(panel.transform.position.y, BlockSize) && block.TestInsideX(panel.transform.position.x, BlockSize, false)) ||
+							(target.TestInsideY(panel.transform.position.y, BlockSize) && target.TestInsideX(panel.transform.position.x, BlockSize, false)))
 						{
 							return;
 						}
@@ -308,14 +316,14 @@ public class PPPlayArea : MonoBehaviour
 		m_BlockParent.transform.position += Vector3.up * ElevateValue;
 
 		// 足りない分ラインを追加
-		while (m_Lines[m_Lines.Count - 1][0].Position.y > m_BlockParentDefaultY + PPPanelBlock.HalfSize)
+		while (m_Lines[m_Lines.Count - 1][0].Position.y > m_BlockParentDefaultY + BlockHalfSize)
 		{
 			AddNewLine();
 		}
 
 		// 座標ループ
 		float blocksY = m_BlockParent.transform.localPosition.y - m_BlockParentDefaultY;
-		if (blocksY > MDDropBlock.Size)
+		if (blocksY > BlockSize)
 		{
 			foreach (Transform child in m_BlockParent.transform)
 			{
@@ -395,8 +403,8 @@ public class PPPlayArea : MonoBehaviour
 
 			// 座標登録
 			pos = Vector3.zero;
-			pos.x = i * PPPanelBlock.Size - m_Size.x / 2f + PPPanelBlock.HalfSize;
-			pos.y = m_Lines.Count > 0 ? m_Lines[m_Lines.Count - 1][0].LocalPosition.y - PPPanelBlock.Size : 0;
+			pos.x = i * BlockSize - m_Size.x / 2f + BlockHalfSize;
+			pos.y = m_Lines.Count > 0 ? m_Lines[m_Lines.Count - 1][0].LocalPosition.y - BlockSize : 0;
 			block.LocalPosition = pos;
 
 			// 使わなくなったパネルを再利用

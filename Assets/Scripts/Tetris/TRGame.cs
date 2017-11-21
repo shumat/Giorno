@@ -33,7 +33,6 @@ public class TRGame : GameBase
 	/// </summary>
 	protected void Awake()
 	{
-		TRPanelBlock.Size = Config.GridSize;
 	}
 
 	/// <summary>

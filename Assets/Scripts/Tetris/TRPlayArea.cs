@@ -12,6 +12,12 @@ public class TRPlayArea : MonoBehaviour
 	/// <summary> サイズ </summary>
 	private Vector3 m_Size = Vector2.zero;
 
+	/// <summary> ブロックサイズ </summary>
+	public float BlockSize { get; private set; }
+
+	/// <summary> ブロックハーフサイズ </summary>
+	public float BlockHalfSize { get { return BlockSize * 0.5f; } }
+
 	/// <summary> ゲーム </summary>
 	private TRGame m_Game = null;
 
@@ -66,8 +72,11 @@ public class TRPlayArea : MonoBehaviour
 		// サイズ登録
 		Height = TRGame.Config.PlayAreaHeight;
 		Width = TRGame.Config.PlayAreaWidth;
-		m_Size.x = Width * TRPanelBlock.Size;
-		m_Size.y = Height * TRPanelBlock.Size;
+
+		BlockSize = TRGame.Config.GridSize;
+
+		m_Size.x = Width * BlockSize;
+		m_Size.y = Height * BlockSize;
 
 		// ブロック生成
 		Vector3 pos;
@@ -80,8 +89,8 @@ public class TRPlayArea : MonoBehaviour
 				line[row].BaseTransform = m_BlockParent.transform;
 
 				pos = Vector3.zero;
-				pos.x = row * TRPanelBlock.Size - (m_Size.x - TRPanelBlock.Size) / 2f;
-				pos.y = -(i * TRPanelBlock.Size + TRPanelBlock.HalfSize);
+				pos.x = row * BlockSize - (m_Size.x - BlockSize) / 2f;
+				pos.y = -(i * BlockSize + BlockHalfSize);
 				line[row].LocalPosition = pos;
 
 				// 連結
@@ -557,8 +566,8 @@ public class TRPlayArea : MonoBehaviour
 	public Vector2i ConvertWorldToGridPosition(Vector3 worldPosition)
 	{
 		// エリア座標に変換
-		Vector3 localPos = worldPosition - (m_Lines[0][0].Position - new Vector3(TRPanelBlock.HalfSize, -TRPanelBlock.HalfSize, 0));
-		return new Vector2i((int)(localPos.x / TRPanelBlock.Size), (int)(localPos.y / TRPanelBlock.Size) * -1);
+		Vector3 localPos = worldPosition - (m_Lines[0][0].Position - new Vector3(BlockHalfSize, -BlockHalfSize, 0));
+		return new Vector2i((int)(localPos.x / BlockSize), (int)(localPos.y / BlockSize) * -1);
 	}
 
 	/// <summary>
@@ -567,8 +576,8 @@ public class TRPlayArea : MonoBehaviour
 	public Vector3 ConvertGridToWorldPosition(Vector2i gridPosition)
 	{
 		Vector3 worldPos = m_Lines[0][0].Position;
-		worldPos.x += gridPosition.x * TRPanelBlock.Size;
-		worldPos.y -= gridPosition.y * TRPanelBlock.Size;
+		worldPos.x += gridPosition.x * BlockSize;
+		worldPos.y -= gridPosition.y * BlockSize;
 		return worldPos;
 	}
 

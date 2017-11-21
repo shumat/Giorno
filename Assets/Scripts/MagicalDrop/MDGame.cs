@@ -33,7 +33,6 @@ public class MDGame : GameBase
 	/// </summary>
 	protected void Awake()
 	{
-		MDDropBlock.Size = Config.DropSize;
 	}
 
 	/// <summary>

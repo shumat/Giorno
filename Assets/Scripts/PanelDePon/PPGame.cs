@@ -24,8 +24,6 @@ public class PPGame : GameBase
 			Destroy(m_Instance);
 		}
 		m_Instance = this;
-
-		PPPanelBlock.Size = m_Config.PanelSize;
 	}
 
 	/// <summary>

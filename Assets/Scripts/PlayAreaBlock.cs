@@ -15,15 +15,6 @@ public class PlayAreaBlock
 		Down,
 	}
 
-	/// <summary> サイズ </summary>
-	public static float Size { get; set; }
-
-	/// <summary> ハーフサイズ </summary>
-	public static float HalfSize
-	{
-		get { return Size * 0.5f; }
-	}
-
 	/// <summary> ベーストランスフォーム </summary>
 	protected Transform m_BaseTransform = null;
 
@@ -135,9 +126,9 @@ public class PlayAreaBlock
 	/// <summary>
 	/// ブロック内に入っているか調べる
 	/// </summary>
-	public bool TestInsideY(float y, bool addBlockSize = true)
+	public bool TestInsideY(float y, float size, bool addBlockSize = true)
 	{
-		float halfSize = Size * 0.5f;
+		float halfSize = size * 0.5f;
 		float range = addBlockSize ? halfSize : 0;
 		return Mathf.Abs(y + range - Position.y) <= halfSize|| Mathf.Abs(y - range - Position.y) <= halfSize;
 	}
@@ -145,9 +136,9 @@ public class PlayAreaBlock
 	/// <summary>
 	/// ブロック内に入っているか調べる
 	/// </summary>
-	public bool TestInsideX(float x, bool addBlockSize = true)
+	public bool TestInsideX(float x, float size, bool addBlockSize = true)
 	{
-		float halfSize = Size * 0.5f;
+		float halfSize = size * 0.5f;
 		float range = addBlockSize ? halfSize : 0;
 		return Mathf.Abs(x + range - Position.x) <= halfSize || Mathf.Abs(x - range - Position.x) <= halfSize;
 	}

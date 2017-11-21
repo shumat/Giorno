@@ -27,6 +27,12 @@ public class MDPlayArea : MonoBehaviour
 
 	/// <summary> サイズ </summary>
 	private Vector3 m_Size = Vector2.zero;
+
+	/// <summary> ブロックサイズ </summary>
+	public float BlockSize { get; private set; }
+
+	/// <summary> ブロックハーフサイズ </summary>
+	public float BlockHalfSize { get { return BlockSize * 0.5f; } }
 	
 	/// <summary> ゲーム </summary>
 	public MDGame Game { get; private set; }
@@ -86,8 +92,10 @@ public class MDPlayArea : MonoBehaviour
 		m_Height = MDGame.Config.PlayAreaHeight;
 		m_Width = MDGame.Config.PlayAreaWidth;
 
-		m_Size.x = m_Width * MDDropBlock.Size;
-		m_Size.y = m_Height * MDDropBlock.Size;
+		BlockSize = MDGame.Config.DropSize;
+
+		m_Size.x = m_Width * BlockSize;
+		m_Size.y = m_Height * BlockSize;
 
 		m_AutoLineCreateWaitTime = MDGame.Config.AutoLineCreateStartTime;
 
@@ -112,7 +120,7 @@ public class MDPlayArea : MonoBehaviour
 
 			// 座標登録
 			Vector3 pos = obj.transform.localPosition;
-			pos.x = i * MDDropBlock.Size - (m_Size.x - MDDropBlock.Size) / 2f;
+			pos.x = i * BlockSize - (m_Size.x - BlockSize) / 2f;
 			obj.transform.localPosition = pos;
 
 			// オブジェクト名登録
@@ -213,13 +221,13 @@ public class MDPlayArea : MonoBehaviour
 		}
 
 		// ラインが全て表示される位置まで移動
-		if (m_Lines[m_Lines.Count - 1][0].Position.y > m_BlockParentDefaultY - MDDropBlock.HalfSize)
+		if (m_Lines[m_Lines.Count - 1][0].Position.y > m_BlockParentDefaultY - BlockHalfSize)
 		{
 			m_BlockParent.transform.position += Vector3.down * Time.deltaTime * MDGame.Config.PlayAreaScrollSpeed;
 
 			// 座標ループ
 			float blocksY = m_BlockParent.transform.localPosition.y - m_BlockParentDefaultY;
-			if (blocksY < -MDDropBlock.Size)
+			if (blocksY < -BlockSize)
 			{
 				foreach (Transform child in m_BlockParent.transform)
 				{
@@ -331,14 +339,14 @@ public class MDPlayArea : MonoBehaviour
 
 			// 座標登録
 			pos = Vector3.zero;
-			pos.x = i * MDDropBlock.Size - (m_Size.x - MDDropBlock.Size) / 2f;
+			pos.x = i * BlockSize - (m_Size.x - BlockSize) / 2f;
 			if (insertHead)
 			{
-				pos.y = m_Lines.Count > 0 ? m_Lines[0][0].LocalPosition.y - MDDropBlock.Size : 0;
+				pos.y = m_Lines.Count > 0 ? m_Lines[0][0].LocalPosition.y - BlockSize : 0;
 			}
 			else
 			{
-				pos.y = m_Lines.Count > 0 ? m_Lines[m_Lines.Count - 1][0].LocalPosition.y + MDDropBlock.Size : 0;
+				pos.y = m_Lines.Count > 0 ? m_Lines[m_Lines.Count - 1][0].LocalPosition.y + BlockSize : 0;
 			}
 			line[i].LocalPosition = pos;
 		}
@@ -663,7 +671,7 @@ public class MDPlayArea : MonoBehaviour
 
 			// プッシュ
 			m_PushingDrops.Add(m_PulledDrop[i]);
-			m_PulledDrop[i].BeginPush(Game.Player.transform.position + Vector3.down * i * MDDropBlock.Size);
+			m_PulledDrop[i].BeginPush(Game.Player.transform.position + Vector3.down * i * BlockSize);
 
 			block = block.GetLink(PlayAreaBlock.Dir.Down) as MDDropBlock;
 		}
@@ -752,7 +760,7 @@ public class MDPlayArea : MonoBehaviour
 		{
 			for (int i = 0; i < m_Lines[0].Length; i++)
 			{
-				if (positionX < m_Lines[0][i].Position.x + MDDropBlock.HalfSize)
+				if (positionX < m_Lines[0][i].Position.x + BlockHalfSize)
 				{
 					return i;
 				}
@@ -783,7 +791,7 @@ public class MDPlayArea : MonoBehaviour
 	/// </summary>
 	public float MinBlockPositionY
 	{
-		get { return m_BlockParentDefaultY - m_Size.y + MDDropBlock.HalfSize; }
+		get { return m_BlockParentDefaultY - m_Size.y + BlockHalfSize; }
 	}
 
 	/// <summary>
