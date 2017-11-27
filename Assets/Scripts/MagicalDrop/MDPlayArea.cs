@@ -494,7 +494,7 @@ public class MDPlayArea : MonoBehaviour
 		// 連鎖数リセット
 		if (needsResetChain && ChainReceiveTime <= 0f)
 		{
-			(Game.Player as MDPlayer).ChainEvent(ChainCount);
+			(Game.Player as MDPlayer).OnChainEnd(ChainCount);
 			ChainCount = 0;
 		}
 	}

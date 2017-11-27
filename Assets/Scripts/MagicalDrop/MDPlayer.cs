@@ -192,13 +192,39 @@ public class MDPlayer : PlayerBase
 	}
 
 	/// <summary>
-	/// 連鎖イベント
+	/// ダメージ
 	/// </summary>
-	public void ChainEvent(int chainCount)
+	public override void AddDamage(int level)
 	{
-		if (chainCount >= 2)
+		base.AddDamage(level);
+		for (int i = 0; i < level; i++)
 		{
-			StartCoroutine(ChainAppeal(chainCount));
+			(Game as MDGame).PlayArea.AddNewLine();
+		}
+	}
+
+	/// <summary>
+	/// 連鎖終了イベント
+	/// </summary>
+	public void OnChainEnd(int chainCount)
+	{
+		//if (chainCount >= 2)
+		//{
+		//	StartCoroutine(ChainAppeal(chainCount));
+		//}
+		if (chainCount > 0)
+		{
+			if (!Game.Controller.isLocalPlayer)
+			{
+				PlayerController[] players = NetworkGameManager.Instance.GetPlayers();
+				foreach (PlayerController player in players)
+				{
+					if (player != Game.Controller)
+					{
+						player.Game.Player.AddDamage(chainCount - 1);
+					}
+				}
+			}
 		}
 	}
 
