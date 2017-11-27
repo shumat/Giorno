@@ -130,7 +130,7 @@ public class PlayAreaBlock
 	{
 		float halfSize = size * 0.5f;
 		float range = addBlockSize ? halfSize : 0;
-		return Mathf.Abs(y + range - Position.y) <= halfSize|| Mathf.Abs(y - range - Position.y) <= halfSize;
+		return Mathf.Abs(y + range - Position.y) <= halfSize || Mathf.Abs(y - range - Position.y) <= halfSize;
 	}
 
 	/// <summary>

@@ -232,7 +232,7 @@ public class PPPanelBlock : PlayAreaBlock
 	public bool GetIsUpperBlockFallWait()
 	{
 		PPPanelBlock upper = GetLink(Dir.Up) as PPPanelBlock;
-		return upper != null && upper.AttachedPanel != null && upper.AttachedPanel.IsFallWait;
+		return upper != null && upper.AttachedPanel != null && upper.AttachedPanel.CurrentState == PPPanel.State.FallReady;
 	}
 
 	/// <summary>

@@ -28,6 +28,7 @@ public class PPPanel : MonoBehaviour
 		None,
 		Move,
 		Vanish,
+		FallReady,
 		Fall,
 	}
 
@@ -48,9 +49,6 @@ public class PPPanel : MonoBehaviour
 
 	/// <summary> プレイ中のコルーチン </summary>
 	private IEnumerator m_PlayingCoroutine = null;
-
-	/// <summary> 落下待機コルーチン </summary>
-	private IEnumerator m_FallWaitCoroutine = null;
 
 	/// <summary> アクティブ </summary>
 	private bool m_Active = false;
@@ -105,8 +103,7 @@ public class PPPanel : MonoBehaviour
 		m_Active = false;
 		m_IsChainSource = false;
 		IgnoreChainSource = false;
-
-		m_FallWaitCoroutine = null;
+		m_PlayingCoroutine = null;
 
 		List<Type> validTypes = new List<Type>();
 		for (int i = (int)Type.ColorA; i <= (int)Type.ColorF; i++)
@@ -179,18 +176,19 @@ public class PPPanel : MonoBehaviour
 	/// <summary>
 	/// 落下待機開始
 	/// </summary>
-	public void BeginFallReady(PPPanelBlock startBlock, PPPanelBlock fallTarget)
+	public void BeginFallReady(PPPanelBlock startBlock)
 	{
-		if (m_State == State.None && !IsFallWait)
+		if (m_State == State.None)
 		{
-			StartCoroutine(m_FallWaitCoroutine = FallReady(startBlock, fallTarget));
+			m_State = State.FallReady;
+			StartCoroutine(m_PlayingCoroutine = FallReady(startBlock));
 		}
 	}
 
 	/// <summary>
 	/// 落下待機
 	/// </summary>
-	public IEnumerator FallReady(PPPanelBlock startBlock, PPPanelBlock fallTarget)
+	public IEnumerator FallReady(PPPanelBlock startBlock)
 	{
 		// 連鎖ソース
 		if (!IgnoreChainSource)
@@ -200,30 +198,26 @@ public class PPPanel : MonoBehaviour
 		IgnoreChainSource = false;
 
 		float waitTime = PPGame.Config.PanelFallWaitTime;
-
-		while (waitTime >= 0f && m_State == State.None)
+		while (waitTime >= 0f)
 		{
 			waitTime -= Time.deltaTime;
 			yield return null;
 		}
 
-		if (m_State == State.None)
-		{
-			BeginFall(startBlock, fallTarget);
-		}
-
-		m_FallWaitCoroutine = null;
+		m_State = State.None;
+		m_PlayingCoroutine = null;
+		BeginFall(startBlock);
 	}
 
 	/// <summary>
 	/// 落下開始
 	/// </summary>
-	public void BeginFall(PPPanelBlock startBlock, PPPanelBlock fallTarget)
+	public void BeginFall(PPPanelBlock startBlock)
 	{
 		if (m_State == State.None)
 		{
 			m_State = State.Fall;
-			StartCoroutine(m_PlayingCoroutine = Falling(startBlock, fallTarget));
+			StartCoroutine(m_PlayingCoroutine = Falling(startBlock));
 
 			// 1つ上のパネルも落下
 			PPPanelBlock upBlock = startBlock.GetLink(PlayAreaBlock.Dir.Up) as PPPanelBlock;
@@ -236,7 +230,7 @@ public class PPPanel : MonoBehaviour
 				}
 				upBlock.AttachedPanel.IgnoreChainSource = false;
 
-				upBlock.AttachedPanel.BeginFall(upBlock, fallTarget.GetLink(PlayAreaBlock.Dir.Up) as PPPanelBlock);
+				upBlock.AttachedPanel.BeginFall(upBlock);
 			}
 		}
 	}
@@ -244,23 +238,32 @@ public class PPPanel : MonoBehaviour
 	/// <summary>
 	/// 落下中
 	/// </summary>
-	public IEnumerator Falling(PPPanelBlock startBlock, PPPanelBlock fallTarget)
+	public IEnumerator Falling(PPPanelBlock startBlock)
 	{
 		// 開始地点からデタッチ
 		startBlock.Detach();
-
-		// 距離算出
-		float distance = Mathf.Abs(fallTarget.Position.y - transform.position.y);
+		
 		PPPanelBlock curBlock = startBlock;
+		PPPanelBlock fallTarget = null;
+		float distance = 0;
 
 		while (true)
 		{
-			// 落下地点の再計算
+			// 今いるブロックを算出
 			while (!curBlock.TestInsideY(transform.position.y, m_Area.BlockSize) && curBlock.GetLink(PlayAreaBlock.Dir.Down) != null)
 			{
-				curBlock = curBlock.GetLink(PlayAreaBlock.Dir.Down) as PPPanelBlock;
+				PPPanelBlock bottom = curBlock.GetLink(PlayAreaBlock.Dir.Down) as PPPanelBlock;
+				if (bottom.AttachedPanel == null)
+				{
+					curBlock = bottom;
+				}
+				else
+				{
+					break;
+				}
 			}
 
+			// 落下地点の再計算
 			fallTarget = curBlock.GetMostUnderEmptyBlock();
 			distance = Mathf.Abs(fallTarget.Position.y - transform.position.y);
 
@@ -288,7 +291,7 @@ public class PPPanel : MonoBehaviour
 			for (int i = 0; i < 2; i++)
 			{
 				PPPanelBlock vertBlock = fallTarget.GetLink(i == 0 ? PlayAreaBlock.Dir.Down : PlayAreaBlock.Dir.Up) as PPPanelBlock;
-				if (vertBlock != null && vertBlock.AttachedPanel != null && vertBlock.AttachedPanel.IsFallWait)
+				if (vertBlock != null && vertBlock.AttachedPanel != null && vertBlock.AttachedPanel.CurrentState == State.FallReady)
 				{
 					vertBlock.AttachedPanel.m_IsChainSource = true;
 				}
@@ -337,7 +340,7 @@ public class PPPanel : MonoBehaviour
 
 		m_SpriteRenderer.enabled = false;
 		
-		wait = endTime - delay;
+		wait = endTime - delay + wait;
 		while (wait > 0)
 		{
 			wait -= Time.deltaTime;
@@ -363,10 +366,6 @@ public class PPPanel : MonoBehaviour
 		{
 			StopCoroutine(m_PlayingCoroutine);
 		}
-		if (m_FallWaitCoroutine != null)
-		{
-			StopCoroutine(m_FallWaitCoroutine);
-		}
 	}
 
 	/// <summary>
@@ -374,14 +373,21 @@ public class PPPanel : MonoBehaviour
 	/// </summary>
 	public void EndPause()
 	{
-		if (m_PlayingCoroutine != null)
+		if (isActiveAndEnabled)
 		{
-			StartCoroutine(m_PlayingCoroutine);
+			if (m_PlayingCoroutine != null)
+			{
+				StartCoroutine(m_PlayingCoroutine);
+			}
 		}
-		if (m_FallWaitCoroutine != null)
-		{
-			StartCoroutine(m_FallWaitCoroutine);
-		}
+	}
+
+	/// <summary>
+	/// コルーチン再生中?
+	/// </summary>
+	public bool IsCoroutinePlaying
+	{
+		get { return m_PlayingCoroutine != null; }
 	}
 
 	/// <summary>
@@ -409,7 +415,7 @@ public class PPPanel : MonoBehaviour
 		set
 		{
 			// 落下中か消滅中は変更不可
-			if (m_State != State.Fall && m_State != State.Vanish && !IsFallWait)
+			if (m_State != State.Fall && m_State != State.Vanish && m_State != State.FallReady)
 			{
 				m_IsChainSource = value;
 			}
@@ -439,13 +445,5 @@ public class PPPanel : MonoBehaviour
 	{
 		get { return m_Block; }
 		set { m_Block = value; }
-	}
-
-	/// <summary>
-	/// 落下待機中
-	/// </summary>
-	public bool IsFallWait
-	{
-		get { return m_FallWaitCoroutine != null; }
 	}
 }

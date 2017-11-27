@@ -115,7 +115,21 @@ public class PPPlayArea : MonoBehaviour
 	/// </summary>
 	public void StartPlayingCoroutine()
 	{
+		// コルーチン再生中のパネルを取得
+		List<PPPanel> playingPanels = new List<PPPanel>();
 		foreach (PPPanel panel in m_Panels)
+		{
+			if (panel.IsCoroutinePlaying)
+			{
+				playingPanels.Add(panel);
+			}
+		}
+
+		// 下から処理するためソート
+		playingPanels.Sort(delegate(PPPanel a, PPPanel b) { return (int)Mathf.Ceil(a.transform.position.y - b.transform.position.y); });
+
+		// 一時停止終了
+		foreach (PPPanel panel in playingPanels)
 		{
 			panel.EndPause();
 		}
@@ -160,7 +174,7 @@ public class PPPlayArea : MonoBehaviour
 					delay += PPGame.Config.PanelVanishDelay;
 
 					// 連鎖ソースチェック
-					if (block.AttachedPanel.IsChainSource && !block.AttachedPanel.IsFallWait)
+					if (block.AttachedPanel.IsChainSource && block.AttachedPanel.CurrentState != PPPanel.State.FallReady)
 					{
 						existChainSource = true;
 					}
@@ -221,10 +235,10 @@ public class PPPlayArea : MonoBehaviour
 	/// </summary>
 	public void SwapPanel(PPPanelBlock block, PlayAreaBlock.Dir dir)
 	{
-		if (block != null && !block.IsLoced() && block.AttachedPanel != null && !block.AttachedPanel.IsFallWait)
+		if (block != null && !block.IsLoced() && block.AttachedPanel != null)
 		{
 			PPPanelBlock target = block.GetLink(dir) as PPPanelBlock;
-			if (target != null && !target.IsLoced() && (target.AttachedPanel == null || !target.AttachedPanel.IsFallWait) && !target.GetIsUpperBlockFallWait())
+			if (target != null && !target.IsLoced() && !target.GetIsUpperBlockFallWait())
 			{
 				// 対象ブロックを落下中のパネルが通過中ならキャンセル
 				foreach (PPPanel panel in m_UsingPanels)
@@ -291,7 +305,7 @@ public class PPPlayArea : MonoBehaviour
 					if ((fallTarget = block.GetMostUnderEmptyBlock()) != null && fallTarget != block)
 					{
 						// 落下待機開始
-						block.AttachedPanel.BeginFallReady(block, fallTarget);
+						block.AttachedPanel.BeginFallReady(block);
 					}
 				}
 			}
