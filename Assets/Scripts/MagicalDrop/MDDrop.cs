@@ -119,7 +119,7 @@ public class MDDrop : MonoBehaviour
 
 		m_Area = area;
 		m_State = State.None;
-		m_Type = (Type)area.Game.PC.SyncRand.Next((int)Type.Red, (int)Type.Frozen + 1);
+		m_Type = (Type)area.Game.Controller.SyncRand.Next((int)Type.Red, (int)Type.Frozen + 1);
 		IsValidVanish = false;
 		IsPushed = false;
 		IsMatchPushed = false;

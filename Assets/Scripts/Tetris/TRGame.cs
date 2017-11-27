@@ -48,7 +48,7 @@ public class TRGame : GameBase
 		Player.Initialize(this);
 		PlayArea.Initialize(this);
 
-		if (!PC.isLocalPlayer)
+		if (!Controller.isLocalPlayer)
 		{
 			PlayArea.transform.position += Vector3.right * 10f;
 		}

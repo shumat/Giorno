@@ -116,7 +116,7 @@ public class PPPanel : MonoBehaviour
 				validTypes.Add((Type)i);
 			}
 		}
-		m_Type = validTypes[area.Game.PC.SyncRand.Next(validTypes.Count)];
+		m_Type = validTypes[area.Game.Controller.SyncRand.Next(validTypes.Count)];
 
 		m_SpriteRenderer.enabled = true;
 		m_SpriteRenderer.sprite = Resources.Load("PanelDePon/Panel_0" + ((int)m_Type - 1).ToString(), typeof(Sprite)) as Sprite;

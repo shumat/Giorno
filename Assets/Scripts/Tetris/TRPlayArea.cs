@@ -39,6 +39,9 @@ public class TRPlayArea : MonoBehaviour
 	/// <summary> 次のテトロミノリスト </summary>
 	private List<int> m_NextTetrominoTypes = new List<int>();
 
+	/// <summary> 行追加リクエスト </summary>
+	private List<int> m_AddLineRequests = new List<int>();
+
 	/// <summary> 現在のライン </summary>
 	public int CurrentLine { get; private set; }
 
@@ -77,37 +80,9 @@ public class TRPlayArea : MonoBehaviour
 
 		m_Size.x = Width * BlockSize;
 		m_Size.y = Height * BlockSize;
-
+		
 		// ブロック生成
-		Vector3 pos;
-		for (int i = 0; i < Height; i++)
-		{
-			TRPanelBlock[] line = new TRPanelBlock[Width];
-			for (int row = 0; row < Width; row++)
-			{
-				line[row] = new TRPanelBlock();
-				line[row].BaseTransform = m_BlockParent.transform;
-
-				pos = Vector3.zero;
-				pos.x = row * BlockSize - (m_Size.x - BlockSize) / 2f;
-				pos.y = -(i * BlockSize + BlockHalfSize);
-				line[row].LocalPosition = pos;
-
-				// 連結
-				if (row > 0)
-				{
-					line[row].SetLink(line[row - 1], PlayAreaBlock.Dir.Left);
-					line[row - 1].SetLink(line[row], PlayAreaBlock.Dir.Right);
-				}
-				if (m_Lines.Count > 0)
-				{
-					line[row].SetLink(m_Lines[i - 1][row], PlayAreaBlock.Dir.Up);
-					m_Lines[i - 1][row].SetLink(line[row], PlayAreaBlock.Dir.Down);
-				}
-			}
-
-			m_Lines.Add(line);
-		}
+		AddLine(Height, true);
 
 		// テトロミノ生成
 		m_Tetromino = new TRTetromino();
@@ -122,23 +97,31 @@ public class TRPlayArea : MonoBehaviour
 		// ラインを下げる
 		DownLine();
 
-		// パネル消滅
-		VanishPanel();
-
-		// パネル落下
-		FallPanel();
-
+		// テトロミノ確定
+		bool tetrominoAttached = false;
 		if (!IsTetrominoFlying())
 		{
 			m_TetrominoAttachWaitTime -= Time.deltaTime;
 			if (m_TetrominoAttachWaitTime < 0)
 			{
 				AttachTetromino();
+				tetrominoAttached = true;
+			}
+		}
 
-				if (!CreateNewTetromino())
-				{
-					Debug.Log("Over");
-				}
+		// パネル消滅
+		VanishPanel();
+
+		// パネル落下
+		FallPanel();
+
+		if (tetrominoAttached)
+		{
+			ApplyAddLineRequest();
+
+			if (!CreateNewTetromino())
+			{
+				Debug.Log("Over");
 			}
 		}
 
@@ -168,7 +151,7 @@ public class TRPlayArea : MonoBehaviour
 		ResetTetrominoAttachWait();
 
 		// テトロミノ作成イベント
-		(m_Game.Player as TRPlayer).NewTetrominoCreateEvent();
+		(m_Game.Player as TRPlayer).OnCreateTetromino();
 
 		// 姿勢更新
 		return UpdateTetromino();
@@ -181,7 +164,7 @@ public class TRPlayArea : MonoBehaviour
 	{
 		for (int i = 0; i < 5 - m_NextTetrominoTypes.Count; i++)
 		{
-			m_NextTetrominoTypes.Add(m_Game.PC.SyncRand.Next(m_Tetromino.NumType));
+			m_NextTetrominoTypes.Add(m_Game.Controller.SyncRand.Next(m_Tetromino.NumType));
 		}
 		int next = m_NextTetrominoTypes[0];
 		m_NextTetrominoTypes.RemoveAt(0);
@@ -507,6 +490,7 @@ public class TRPlayArea : MonoBehaviour
 	/// </summary>
 	public void VanishPanel()
 	{
+		int count = 0;
 		foreach (TRPanelBlock[] blocks in m_Lines)
 		{
 			if (blocks[0].GetPanelCountDir(PlayAreaBlock.Dir.Right) == Width)
@@ -515,7 +499,14 @@ public class TRPlayArea : MonoBehaviour
 				{
 					block.AttachedPanel.BeginVanish();
 				}
+				++count;
 			}
+		}
+
+		// ライン消しイベント
+		if (count > 0)
+		{
+			(m_Game.Player as TRPlayer).OnLineVanish(count);
 		}
 	}
 
@@ -555,6 +546,129 @@ public class TRPlayArea : MonoBehaviour
 		if (!m_UnusedPanels.Contains(panel))
 		{
 			m_UnusedPanels.Add(panel);
+		}
+	}
+
+	#endregion
+
+	#region Line
+
+	/// <summary>
+	/// 先頭の行追加リクエストを適用
+	/// </summary>
+	private void ApplyAddLineRequest()
+	{
+		if (m_AddLineRequests.Count > 0)
+		{
+			AddLine(m_AddLineRequests[0], false, m_Game.Controller.SyncRand.Next(Width));
+			m_AddLineRequests.RemoveAt(0);
+		}
+	}
+
+	/// <summary>
+	/// 行追加リクエスト
+	/// </summary>
+	public void RequestAddLine(int count)
+	{
+		m_AddLineRequests.Add(count);
+	}
+
+	/// <summary>
+	/// 行追加
+	/// </summary>
+	private void AddLine(int count, bool empty, int emptyRow = -1)
+	{
+		// ブロック生成
+		for (int i = 0; i < count; i++)
+		{
+			TRPanelBlock[] line = new TRPanelBlock[Width];
+			for (int row = 0; row < line.Length; row++)
+			{
+				line[row] = new TRPanelBlock();
+				line[row].BaseTransform = m_BlockParent.transform;
+
+				Vector3 pos = Vector3.zero;
+				pos.x = row * BlockSize - (m_Size.x - BlockSize) / 2f;
+				pos.y = -(m_Lines.Count * BlockSize + BlockHalfSize);
+				line[row].LocalPosition = pos;
+
+				// 連結
+				if (row > 0)
+				{
+					line[row].SetLink(line[row - 1], PlayAreaBlock.Dir.Left);
+					line[row - 1].SetLink(line[row], PlayAreaBlock.Dir.Right);
+				}
+				if (m_Lines.Count > 0)
+				{
+					line[row].SetLink(m_Lines[m_Lines.Count - 1][row], PlayAreaBlock.Dir.Up);
+					m_Lines[m_Lines.Count - 1][row].SetLink(line[row], PlayAreaBlock.Dir.Down);
+				}
+
+				// パネル生成
+				if (!empty && row != emptyRow)
+				{
+					TRPanel panel;
+					// パネル再利用
+					if (m_UnusedPanels.Count > 0)
+					{
+						panel = m_UnusedPanels[0];
+						m_UnusedPanels.RemoveAt(0);
+					}
+					// パネル生成
+					else
+					{
+						panel = Instantiate(PanelTemplate).GetComponent<TRPanel>();
+						panel.transform.SetParent(m_BlockParent.transform);
+					}
+					panel.Initialize(this, Color.gray);
+					line[row].Attach(panel, true);
+				}
+			}
+			m_Lines.Add(line);
+		}
+
+		// 座標を調整
+		int dif = m_Lines.Count - Height;
+		if (dif > 0)
+		{
+			foreach (TRPanelBlock[] line in m_Lines)
+			{
+				foreach (TRPanelBlock block in line)
+				{
+					block.LocalPosition += Vector3.up * BlockSize * dif;
+					if (block.AttachedPanel != null)
+					{
+						block.AttachedPanel.transform.localPosition += Vector3.up * BlockSize * dif;
+					}
+					if (block.ReservedPanel != null)
+					{
+						block.ReservedPanel.transform.localPosition += Vector3.up * BlockSize * dif;
+					}
+				}
+			}
+
+			// 範囲外の分を破棄
+			for (int i = 0; i < dif; i++)
+			{
+				foreach (TRPanelBlock block in m_Lines[i])
+				{
+					if (block.AttachedPanel != null)
+					{
+						block.AttachedPanel.Deactivate();
+						RemovePanel(block.AttachedPanel);
+					}
+					else if (block.ReservedPanel != null)
+					{
+						block.ReservedPanel.Deactivate();
+						RemovePanel(block.ReservedPanel);
+					}
+				}
+				m_Lines.RemoveAt(0);
+			}
+			foreach (TRPanelBlock block in m_Lines[0])
+			{
+				block.SetLink(null, PlayAreaBlock.Dir.Up);
+			}
 		}
 	}
 

@@ -17,7 +17,7 @@ public class GameBase : MonoBehaviour
 	}
 
 	/// <summary> プレイヤーコントローラ </summary>
-	public PlayerController PC { get; protected set; }
+	public PlayerController Controller { get; protected set; }
 
 	/// <summary> プレイヤー </summary>
 	public PlayerBase Player { get; protected set; }
@@ -25,9 +25,9 @@ public class GameBase : MonoBehaviour
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	public virtual void Initialize(PlayerController pc)
+	public virtual void Initialize(PlayerController controller)
 	{
-		PC = pc;
+		Controller = controller;
 	}
 
 	/// <summary>

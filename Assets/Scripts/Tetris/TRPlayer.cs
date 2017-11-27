@@ -122,9 +122,36 @@ public class TRPlayer : PlayerBase
 	}
 
 	/// <summary>
+	/// ダメージ
+	/// </summary>
+	public override void AddDamage(int level)
+	{
+		base.AddDamage(level);
+		(Game as TRGame).PlayArea.RequestAddLine(level);
+	}
+
+	/// <summary>
+	/// ライン消しイベント
+	/// </summary>
+	public void OnLineVanish(int count)
+	{
+		if (!Game.Controller.isLocalPlayer)
+		{
+			PlayerController[] players = NetworkGameManager.Instance.GetPlayers();
+			foreach (PlayerController player in players)
+			{
+				if (player != Game.Controller)
+				{
+					player.Game.Player.AddDamage(count);
+				}
+			}
+		}
+	}
+
+	/// <summary>
 	/// テトロミノ生成イベント
 	/// </summary>
-	public void NewTetrominoCreateEvent()
+	public void OnCreateTetromino()
 	{
 		m_PossibleMoveTetromino = false;
 	}

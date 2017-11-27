@@ -62,4 +62,9 @@ public class PlayerBase : MonoBehaviour
 	/// コマンド実行
 	/// </summary>
 	public virtual void ExecuteCommand(PlayerController.CommandData command){}
+
+	/// <summary>
+	/// ダメージ
+	/// </summary>
+	public virtual void AddDamage(int level){}
 }

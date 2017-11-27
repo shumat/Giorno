@@ -135,7 +135,7 @@ public class PPPlayer : PlayerBase
 	{
 		PPPlayArea playArea = (Game as PPGame).PlayArea;
 
-		if (!Game.PC.isLocalPlayer)
+		if (!Game.Controller.isLocalPlayer)
 		{
 			Debug.Log(command.type);
 		}

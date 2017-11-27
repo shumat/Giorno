@@ -115,7 +115,11 @@ public class MatchingManager : MonoBehaviour
 		// クライアントとして開始できなければホストとして開始
 		if (!NetworkClient.active)
 		{
-			nm.StartHost();
+			if (nm.StartHost() == null)
+			{
+				StartCoroutine(LocalMatching());
+				yield break;
+			}
 		}
 
 		// メンバーが揃うまで待機
