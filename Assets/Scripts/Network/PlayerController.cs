@@ -38,6 +38,7 @@ public class PlayerController : NetworkBehaviour
 
 		TR_Move,
 		TR_Rotate,
+		TR_Hold,
 	}
 
 	/// <summary> フレーム </summary>

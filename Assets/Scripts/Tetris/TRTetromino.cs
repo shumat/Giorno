@@ -23,6 +23,14 @@ public class TRTetromino
 	private int m_Type = 0;
 
 	/// <summary>
+	/// タイプ
+	/// </summary>
+	public int ShapeType
+	{
+		get { return m_Type; }
+	}
+
+	/// <summary>
 	/// 初期化
 	/// </summary>
 	public void Initialize(int type)

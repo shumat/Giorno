@@ -39,6 +39,12 @@ public class TRPlayArea : MonoBehaviour
 	/// <summary> 次のテトロミノリスト </summary>
 	private List<int> m_NextTetrominoTypes = new List<int>();
 
+	/// <summary> ホールド中のテトロミノ </summary>
+	private int m_HoldTetrominoType = -1;
+
+	/// <summary> ホールド可能?</summary>
+	public bool PossibleHold { get; private set; }
+
 	/// <summary> 行追加リクエスト </summary>
 	private List<int> m_AddLineRequests = new List<int>();
 
@@ -137,10 +143,15 @@ public class TRPlayArea : MonoBehaviour
 	/// <summary>
 	/// テトロミノ新規作成
 	/// </summary>
-	public bool CreateNewTetromino()
+	public bool CreateNewTetromino(int type = -1)
 	{
+		if (type < 0)
+		{
+			type = GetNextTetromino();
+		}
+
 		// 初期化
-		m_Tetromino.Initialize(GetNextTetromino());
+		m_Tetromino.Initialize(type);
 
 		// 初期座標
 		m_Tetromino.GridPosition = new Vector2i(Width / 2, 1);
@@ -152,6 +163,8 @@ public class TRPlayArea : MonoBehaviour
 
 		// テトロミノ作成イベント
 		(m_Game.Player as TRPlayer).OnCreateTetromino();
+
+		PossibleHold = true;
 
 		// 姿勢更新
 		return UpdateTetromino();
@@ -479,6 +492,31 @@ public class TRPlayArea : MonoBehaviour
 	public void ResetDownLineWait()
 	{
 		m_MoveDownWaitTime = m_MoveDownInterval;
+	}
+
+	/// <summary>
+	/// ホールド
+	/// </summary>
+	public void Hold()
+	{
+		if (PossibleHold)
+		{
+			int hold = m_Tetromino.ShapeType;
+
+			// 現行のテトロミノを破棄
+			foreach (TRPanel parts in m_TetrominoParts)
+			{
+				m_UnusedPanels.Add(parts);
+				parts.Block.CancelReserve();
+				parts.Deactivate();
+			}
+			m_TetrominoParts.Clear();
+
+			// 新規テトロミノ作成
+			CreateNewTetromino(m_HoldTetrominoType);
+			m_HoldTetrominoType = hold;
+			PossibleHold = false;
+		}
 	}
 
 	#endregion

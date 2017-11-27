@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class TRPlayer : PlayerBase
 {
+	/// <summary> タッチ開始座標 </summary>
+	private Vector3 m_TouchStartPosition = Vector3.zero;
 	/// <summary> 前回のタッチ座標 </summary>
 	private Vector3 m_PrevTouchPosition = Vector3.zero;
 	/// <summary> タッチ移動距離 </summary>
@@ -32,7 +34,8 @@ public class TRPlayer : PlayerBase
 		// タッチ開始
 		if (InputManager.IsTouchDown())
 		{
-			m_PrevTouchPosition = InputManager.GetWorldTouchPosition();
+			m_TouchStartPosition = InputManager.GetWorldTouchPosition();
+			m_PrevTouchPosition = m_TouchStartPosition;
 			m_TouchMoveDistance = 0;
 
 			m_PossibleMoveTetromino = true;
@@ -64,8 +67,13 @@ public class TRPlayer : PlayerBase
 				// 今回のタッチ位置を保持
 				m_PrevTouchPosition = currentTouchPos;
 
+				// ホールド
+				if ((currentTouchPos - m_TouchStartPosition).y > 3f && (Game as TRGame).PlayArea.PossibleHold)
+				{
+					HoldTetromino();
+				}
 				// テトロミノ移動
-				if (m_PossibleMoveTetromino)
+				else if (m_PossibleMoveTetromino)
 				{
 					MoveTetromino((Game as TRGame).PlayArea.ConvertWorldToGridPosition(m_TetrominoTarget));
 				}
@@ -99,6 +107,16 @@ public class TRPlayer : PlayerBase
 	}
 
 	/// <summary>
+	/// ホールド
+	/// </summary>
+	private void HoldTetromino()
+	{
+		PlayerController.CommandData command = new PlayerController.CommandData();
+		command.type =  (byte)PlayerController.CommandType.TR_Hold;
+		SetNextCommand(command);
+	}
+
+	/// <summary>
 	/// コマンド実行
 	/// </summary>
 	public override void ExecuteCommand(PlayerController.CommandData command)
@@ -117,6 +135,10 @@ public class TRPlayer : PlayerBase
 				{
 					(Game as TRGame).PlayArea.RotateTetromino(command.values[0] == 1);
 				}
+				break;
+
+			case PlayerController.CommandType.TR_Hold:
+				(Game as TRGame).PlayArea.Hold();
 				break;
 		}
 	}
