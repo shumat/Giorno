@@ -373,7 +373,7 @@ public class MDPlayArea : MonoBehaviour
 		{
 			foreach (MDDropBlock block in line)
 			{
-				if (block.AttachedDrop != null && (block.AttachedDrop.CurrentState == MDDrop.State.Vanish || block.AttachedDrop.IsChanging))
+				if (block.AttachedDrop != null && (block.AttachedDrop.CurrentState == MDDrop.State.Vanish || block.AttachedDrop.CurrentState == MDDrop.State.Change))
 				{
 					// 連鎖受付時間リセット
 					ChainReceiveTime = MDGame.Config.MaxChainReceiveTime;

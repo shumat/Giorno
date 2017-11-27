@@ -28,6 +28,7 @@ public class MDDrop : MonoBehaviour
 		Close,
 		Pull,
 		Push,
+		Change,
 	}
 
 	/// <summary> スプライトレンダラ </summary>
@@ -47,9 +48,6 @@ public class MDDrop : MonoBehaviour
 
 	/// <summary> プレイ中のコルーチン </summary>
 	private IEnumerator m_PlayingCoroutine = null;
-
-	/// <summary> タイプチェンジコルーチン </summary>
-	private IEnumerator m_ChangeCoroutine = null;
 
 	/// <summary> 移動ベクトル </summary>
 	private Vector3 m_MoveDir = Vector3.zero;
@@ -328,9 +326,10 @@ public class MDDrop : MonoBehaviour
 	/// </summary>
 	public void BeginChange(Type type)
 	{
-		if (m_ChangeCoroutine == null)
+		if (m_State == State.None)
 		{
-			StartCoroutine(m_ChangeCoroutine = Changing(type));
+			m_State = State.Change;
+			StartCoroutine(m_PlayingCoroutine = Changing(type));
 		}
 	}
 
@@ -360,7 +359,8 @@ public class MDDrop : MonoBehaviour
 
 		m_Type = type;
 
-		m_ChangeCoroutine = null;
+		m_State = State.None;
+		m_PlayingCoroutine = null;
 	}
 
 	/// <summary>
@@ -391,10 +391,6 @@ public class MDDrop : MonoBehaviour
 		{
 			StopCoroutine(m_PlayingCoroutine);
 		}
-		if (m_ChangeCoroutine != null)
-		{
-			StopCoroutine(m_ChangeCoroutine);
-		}
 	}
 
 	/// <summary>
@@ -405,10 +401,6 @@ public class MDDrop : MonoBehaviour
 		if (m_PlayingCoroutine != null)
 		{
 			StartCoroutine(m_PlayingCoroutine);
-		}
-		if (m_ChangeCoroutine != null)
-		{
-			StartCoroutine(m_ChangeCoroutine);
 		}
 	}
 
@@ -426,12 +418,6 @@ public class MDDrop : MonoBehaviour
 	public State CurrentState
 	{
 		get { return m_State; }
-	}
-
-	/// <summary> タイプチェンジ中 </summary>
-	public bool IsChanging
-	{
-		get { return m_ChangeCoroutine != null; }
 	}
 
 	/// <summary>
