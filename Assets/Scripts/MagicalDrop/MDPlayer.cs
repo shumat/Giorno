@@ -6,8 +6,6 @@ public class MDPlayer : PlayerBase
 {
 	/// <summary> タッチ開始地点 </summary>
 	private Vector3 m_TouchStartPos = Vector3.zero;
-	/// <summary> タッチ時間 </summary>
-	private float m_TouchTime = 0f;
 
 	/// <summary> 現在位置 </summary>
 	private int m_CurrentRow = 0;
@@ -68,7 +66,7 @@ public class MDPlayer : PlayerBase
 		{
 			m_TouchStartPos = InputManager.GetWorldTouchPosition();
 			m_IgnoreAction = false;
-			m_TouchTime = 0;
+			m_LineCreateWaitTime = 0;
 
 			// 背景ライン演出
 			playArea.SetBackLineFlash(playArea.ConvertPositionToRow(m_TouchStartPos.x));
@@ -81,15 +79,11 @@ public class MDPlayer : PlayerBase
 			UpdatePosition();
 
 			// ライン作成
-			m_TouchTime += Time.deltaTime;
 			m_LineCreateWaitTime -= Time.deltaTime;
-			if (m_TouchTime > MDGame.Config.LineCreateStartTouchTime)
+			if (InputManager.IsTouchDouble() && m_LineCreateWaitTime <= 0f)
 			{
-				if (m_LineCreateWaitTime <= 0f)
-				{
-					m_LineCreateWaitTime = MDGame.Config.LineCreateContinueTouchTime;
-					AddLine();
-				}
+				m_LineCreateWaitTime = MDGame.Config.LineCreateContinueTouchTime;
+				AddLine();
 			}
 			// アクション
 			else if (!m_IgnoreAction)

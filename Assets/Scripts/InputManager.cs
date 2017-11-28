@@ -94,4 +94,12 @@ public class InputManager : MonoBehaviour
 #endif
 		}
 	}
+
+	/// <summary>
+	/// 2点タッチ中?
+	/// </summary>
+	public static bool IsTouchDouble()
+	{
+		return TouchCount == 2;
+	}
 }

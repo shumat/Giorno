@@ -50,7 +50,7 @@ public class PPPlayer : PlayerBase
 		if (InputManager.IsTouch())
 		{
 			// せり上げ
-			if (InputManager.TouchCount >= 2)
+			if (InputManager.IsTouchDouble())
 			{
 				Elevate();
 			}
