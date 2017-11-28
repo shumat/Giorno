@@ -7,11 +7,6 @@ public class PPPlayer : PlayerBase
 	/// <summary> タッチしたブロック </summary>
 	private PPPanelBlock m_TouchedBlock = null;
 
-	/// <summary> タッチ開始地点 </summary>
-	private Vector3 m_TouchStartPos = Vector3.zero;
-	/// <summary> タッチ時間 </summary>
-	private float m_TouchTime = 0f;
-
 	/// <summary> ゲームレベル </summary>
 	public int GameLevel { get; private set; }
 
@@ -47,58 +42,50 @@ public class PPPlayer : PlayerBase
 		// タッチした瞬間
 		if (InputManager.IsTouchDown())
 		{
-			m_TouchStartPos = Camera.main.ScreenToWorldPoint(InputManager.GetTouchPosition());
-			m_TouchTime = 0;
-
 			// タッチブロック保持
-			m_TouchedBlock = playArea.GetHitBlock(m_TouchStartPos);
+			m_TouchedBlock = playArea.GetBlock(Camera.main.ScreenToWorldPoint(InputManager.GetTouchPosition()));
 		}
 
 		// タッチ中
 		if (InputManager.IsTouch())
 		{
 			// せり上げ
-			m_TouchTime += Time.deltaTime;
-			if (m_TouchTime > PPGame.Config.ElevateStartTouchTime)
+			if (InputManager.TouchCount >= 2)
 			{
 				Elevate();
 			}
 			// 入れ替え
 			else if (m_TouchedBlock != null)
 			{
-				Vector2 dif = Camera.main.ScreenToWorldPoint(InputManager.GetTouchPosition()) - m_TouchStartPos;
-				if (dif.magnitude > PPGame.Config.PanelSwapStartSwipeDistance)
+				// 移動先グリッド
+				Vector2i target = playArea.ConvertWorldToGrid(Camera.main.ScreenToWorldPoint(InputManager.GetTouchPosition()));
+
+				// 移動元グリッド
+				Vector2i current = playArea.GetBlockGrid(m_TouchedBlock);
+
+				if (target != current)
 				{
-					PlayAreaBlock.Dir dir = PlayAreaBlock.Dir.Left;
-					bool doSwap = true;
-					dif.Normalize();
-					if (dif.x < -PPGame.Config.PanelSwapDirThreshouldScale)
+					Vector2i dif = target - current;
+					PlayAreaBlock.Dir dir;
+					if (dif.x < 0)
 					{
 						dir = PlayAreaBlock.Dir.Left;
 					}
-					else if (dif.x > PPGame.Config.PanelSwapDirThreshouldScale)
+					else if (dif.x > 0)
 					{
 						dir = PlayAreaBlock.Dir.Right;
 					}
-					else if (dif.y > PPGame.Config.PanelSwapDirThreshouldScale)
-					{
-						dir = PlayAreaBlock.Dir.Up;
-					}
-					else if (dif.y < -PPGame.Config.PanelSwapDirThreshouldScale)
+					else if (dif.y > 0)
 					{
 						dir = PlayAreaBlock.Dir.Down;
 					}
 					else
 					{
-						doSwap = false;
+						dir = PlayAreaBlock.Dir.Up;
 					}
 
 					// 交換
-					if (doSwap)
-					{
-						SwapPanel(m_TouchedBlock, dir);
-						m_TouchedBlock = null;
-					}
+					SwapPanel(m_TouchedBlock, dir);
 				}
 			}
 		}
@@ -146,7 +133,11 @@ public class PPPlayer : PlayerBase
 				if (command.values != null)
 				{
 					Vector2i grid = new Vector2i(command.values[0] % PPGame.Config.PlayAreaWidth, command.values[0] / PPGame.Config.PlayAreaWidth);
-					playArea.SwapPanel(playArea.GetBlock(grid), (PlayAreaBlock.Dir)command.values[1]);
+					PPPanelBlock result = playArea.SwapPanel(playArea.GetBlock(grid), (PlayAreaBlock.Dir)command.values[1]);
+					if (result != null)
+					{
+						m_TouchedBlock = result;
+					}
 				}
 				break;
 

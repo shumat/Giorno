@@ -48,26 +48,22 @@ public class PPGame : GameBase
 	}
 
 	/// <summary>
-	/// フレーム開始時の更新
-	/// </summary>
-	public override void FirstProcess()
-	{
-		// せり上げスピード登録
-		PlayArea.ElevateValue = PPGame.Config.AutoElevateValue;
-		PlayArea.MaxElevateWaitTime = PPGame.Config.GetAutoElevateInterval((Player as PPPlayer).GameLevel);
-
-		// コルーチン再生
-		PlayArea.StartPlayingCoroutine();
-	}
-
-	/// <summary>
 	/// 更新
 	/// </summary>
 	public override void Process()
-	{
+	{		
+		// コルーチン再生
+		PlayArea.StartPlayingCoroutine();
+
 		// エリア更新
 		PlayArea.Process();
+	}
 
+	/// <summary>
+	/// フレーム終了時の更新
+	/// </summary>
+	public override void LateProcess()
+	{
 		// コルーチン停止
 		PlayArea.StopPlayingCoroutine();
 	}

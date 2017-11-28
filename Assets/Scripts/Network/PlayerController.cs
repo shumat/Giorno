@@ -103,7 +103,7 @@ public class PlayerController : NetworkBehaviour
 			}
 
 			// ゲーム更新
-			Game.FirstProcess();
+			Game.Process();
 
 			// プレイヤー操作
 			CommandData command = Game.Player.Process();
@@ -115,7 +115,7 @@ public class PlayerController : NetworkBehaviour
 			ExecuteCommand(FrameCount);
 
 			// ゲーム更新
-			Game.Process();
+			Game.LateProcess();
 
 			++FrameCount;
 		}
@@ -126,13 +126,13 @@ public class PlayerController : NetworkBehaviour
 			while (NetworkGameManager.Instance.IsReadyUpdate(FrameCount))
 			{
 				// ゲーム更新
-				Game.FirstProcess();
+				Game.Process();
 
 				// コマンド実行
 				ExecuteCommand(FrameCount++);
 
 				// ゲーム更新
-				Game.Process();
+				Game.LateProcess();
 			}
 		}
 	}

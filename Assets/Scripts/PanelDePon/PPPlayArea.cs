@@ -94,6 +94,10 @@ public class PPPlayArea : MonoBehaviour
 	/// </summary>
 	public void Process()
 	{
+		// せり上げスピード登録
+		ElevateValue = PPGame.Config.AutoElevateValue;
+		MaxElevateWaitTime = PPGame.Config.GetAutoElevateInterval((Game.Player as PPPlayer).GameLevel);
+
 		// パネル除外
 		RemovePanel();
 
@@ -233,7 +237,7 @@ public class PPPlayArea : MonoBehaviour
 	/// <summary>
 	/// パネル交換
 	/// </summary>
-	public void SwapPanel(PPPanelBlock block, PlayAreaBlock.Dir dir)
+	public PPPanelBlock SwapPanel(PPPanelBlock block, PlayAreaBlock.Dir dir)
 	{
 		if (block != null && !block.IsLoced() && block.AttachedPanel != null)
 		{
@@ -248,7 +252,7 @@ public class PPPlayArea : MonoBehaviour
 						if ((block.TestInsideY(panel.transform.position.y, BlockSize) && block.TestInsideX(panel.transform.position.x, BlockSize, false)) ||
 							(target.TestInsideY(panel.transform.position.y, BlockSize) && target.TestInsideX(panel.transform.position.x, BlockSize, false)))
 						{
-							return;
+							return null;
 						}
 					}
 				}
@@ -283,8 +287,11 @@ public class PPPlayArea : MonoBehaviour
 						tempBlock.AttachedPanel.IgnoreChainSource = true;
 					}
 				}
+
+				return target;
 			}
 		}
+		return null;
 	}
 
 	/// <summary>
@@ -511,55 +518,6 @@ public class PPPlayArea : MonoBehaviour
 	}
 
 	/// <summary>
-	/// ヒットしたパネル取得
-	/// </summary>
-	public PPPanel GetHitPanel(Vector2 worldPoint)
-	{
-		Collider2D collider = Physics2D.OverlapPoint(worldPoint);
-		if (collider != null)
-		{
-			PPPanel panel = collider.gameObject.GetComponent<PPPanel>();
-			if (panel != null)
-			{
-				return panel;
-			}
-		}
-
-		return null;
-	}
-
-	/// <summary>
-	/// ヒットしたブロック取得
-	/// </summary>
-	public PPPanelBlock GetHitBlock(Vector3 screenPosition)
-	{
-		return FindBlock(GetHitPanel(screenPosition));
-	}
-
-	/// <summary>
-	/// ブロック検索
-	/// </summary>
-	private PPPanelBlock FindBlock(PPPanel panel)
-	{
-		if (panel == null)
-		{
-			return null;
-		}
-
-		foreach (PPPanelBlock[] line in m_Lines)
-		{
-			foreach (PPPanelBlock block in line)
-			{
-				if (block.AttachedPanel == panel)
-				{
-					return block;
-				}
-			}
-		}
-		return null;
-	}
-
-	/// <summary>
 	/// ブロックのグリッド座標を取得
 	/// </summary>
 	public Vector2i GetBlockGrid(PPPanelBlock block)
@@ -585,6 +543,52 @@ public class PPPlayArea : MonoBehaviour
 	public PPPanelBlock GetBlock(Vector2i grid)
 	{
 		return m_Lines[grid.y][grid.x];
+	}
+
+	/// <summary>
+	/// ワールド座標からブロックを取得
+	/// </summary>
+	public PPPanelBlock GetBlock(Vector3 worldPosition)
+	{
+		Vector2i grid = ConvertWorldToGrid(worldPosition);
+		if (grid.x >= 0 && grid.x < m_Width && grid.y >= 0 && grid.y < m_Lines.Count)
+		{
+			return GetBlock(grid);
+		}
+		return null;
+	}
+
+	/// <summary>
+	/// パネルからブロックを取得
+	/// </summary>
+	private PPPanelBlock GetBlock(PPPanel panel)
+	{
+		if (panel == null)
+		{
+			return null;
+		}
+
+		foreach (PPPanelBlock[] line in m_Lines)
+		{
+			foreach (PPPanelBlock block in line)
+			{
+				if (block.AttachedPanel == panel)
+				{
+					return block;
+				}
+			}
+		}
+		return null;
+	}
+
+	/// <summary>
+	/// ワールド座標をグリッド座標に変換
+	/// </summary>
+	public Vector2i ConvertWorldToGrid(Vector3 worldPosition)
+	{
+		Vector3 areaOrigin = m_Lines[0][0].Position + new Vector3(-BlockHalfSize, BlockHalfSize, 0);
+		Vector3 local = worldPosition - areaOrigin;
+		return new Vector2i((int)(local.x / BlockSize), (int)(-local.y / BlockSize));
 	}
 
 	/// <summary>

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -77,5 +78,20 @@ public class InputManager : MonoBehaviour
 		}
 		return false;
 #endif
+	}
+
+	/// <summary>
+	/// タッチ数
+	/// </summary>
+	public static int TouchCount
+	{
+		get
+		{
+#if UNITY_EDITOR || UNITY_STANDALONE_WIN
+			return Convert.ToInt32(Input.GetMouseButton(0)) + Convert.ToInt32(Input.GetMouseButton(1));
+#else
+			return Input.touchCount;
+#endif
+		}
 	}
 }
