@@ -5,9 +5,9 @@ using UnityEngine;
 public class PPPlayArea : MonoBehaviour
 {
 	/// <summary> 最大行数 </summary>
-	private int m_Height;
+	public int Height { get; private set; }
 	/// <summary> 最大列数 </summary>
-	private int m_Width;
+	public int Width { get; private set; }
 
 	/// <summary> サイズ </summary>
 	private Vector3 m_Size = Vector2.zero;
@@ -72,21 +72,21 @@ public class PPPlayArea : MonoBehaviour
 	{
 		Game = game;
 
-		m_Height = PPGame.Config.PlayAreaHeight;
-		m_Width = PPGame.Config.PlayAreaWidth;
+		Height = PPGame.Config.PlayAreaHeight;
+		Width = PPGame.Config.PlayAreaWidth;
 
 		BlockSize = PPGame.Config.PanelSize;
 
-		m_Size.x = m_Width * BlockSize;
-		m_Size.y = m_Height * BlockSize;
+		m_Size.x = Width * BlockSize;
+		m_Size.y = Height * BlockSize;
 
 		// 適当に初期化
-		for (int i = 0; i < 5; i++)
+		for (int i = 0; i < 1; i++)
 		{
-			AddNewLine();
+			AddNewLine(false, false);
 		}
 
-		m_BlockParent.transform.position += Vector3.up * (BlockSize * 5 - BlockHalfSize);
+		m_BlockParent.transform.position += Vector3.up * (BlockSize * 1 - BlockHalfSize);
 	}
 
 	/// <summary>
@@ -239,10 +239,10 @@ public class PPPlayArea : MonoBehaviour
 	/// </summary>
 	public PPPanelBlock SwapPanel(PPPanelBlock block, PlayAreaBlock.Dir dir)
 	{
-		if (block != null && !block.IsLoced() && block.AttachedPanel != null)
+		if (block != null && !block.IsLoced() && block.AttachedPanel != null && !block.AttachedPanel.IsDisturbance)
 		{
 			PPPanelBlock target = block.GetLink(dir) as PPPanelBlock;
-			if (target != null && !target.IsLoced() && !target.GetIsUpperBlockFallWait())
+			if (target != null && !target.IsLoced() && !target.GetIsUpperBlockFallWait() && (target.AttachedPanel == null || !target.AttachedPanel.IsDisturbance))
 			{
 				// 対象ブロックを落下中のパネルが通過中ならキャンセル
 				foreach (PPPanel panel in m_UsingPanels)
@@ -282,7 +282,7 @@ public class PPPlayArea : MonoBehaviour
 				if (block.AttachedPanel == null)
 				{
 					tempBlock = block;
-					while ((tempBlock = tempBlock.GetLink(PlayAreaBlock.Dir.Up) as PPPanelBlock) != null && tempBlock.AttachedPanel != null)
+					while ((tempBlock = tempBlock.GetLink(PlayAreaBlock.Dir.Up) as PPPanelBlock) != null && tempBlock.AttachedPanel != null && !tempBlock.AttachedPanel.IsDisturbance)
 					{
 						tempBlock.AttachedPanel.IgnoreChainSource = true;
 					}
@@ -309,7 +309,7 @@ public class PPPlayArea : MonoBehaviour
 				if (!block.IsLoced() && block.AttachedPanel != null)
 				{
 					// 落下地点取得
-					if ((fallTarget = block.GetMostUnderEmptyBlock()) != null && fallTarget != block)
+					if ((fallTarget = block.AttachedPanel.GetFallTarget()) != null && fallTarget != block)
 					{
 						// 落下待機開始
 						block.AttachedPanel.BeginFallReady(block);
@@ -357,7 +357,7 @@ public class PPPlayArea : MonoBehaviour
 		// 足りない分ラインを追加
 		while (m_Lines[m_Lines.Count - 1][0].Position.y > m_BlockParentDefaultY + BlockHalfSize)
 		{
-			AddNewLine();
+			AddNewLine(false, false);
 		}
 
 		// 座標ループ
@@ -379,8 +379,144 @@ public class PPPlayArea : MonoBehaviour
 		}
 
 		// 余分な行を消す
+		DeleteEmptyLine();
+	}
+
+	/// <summary>
+	/// せり上げ時間間隔スキップ
+	/// </summary>
+	public void SkipElevateWait()
+	{
+		m_ElevateWaitTime = 0;
+	}
+
+	/// <summary>
+	/// 新規行追加
+	/// </summary>
+	public PPPanelBlock[] AddNewLine(bool empty, bool insertHead)
+	{
+		// 現在の最上段/最下段の行を取得
+		PPPanelBlock[] sideLine = null;
+		if (m_Lines.Count > 0)
+		{
+			sideLine = insertHead ? m_Lines[0] : m_Lines[m_Lines.Count - 1];
+		}
+
+		PPPanelBlock[] line = new PPPanelBlock[Width];
+		PPPanel panel;
+		PPPanelBlock block;
+		Vector3 pos;
+		List<PPPanel.Type> ignoreTypes = new List<PPPanel.Type>();
+
+		// パネル生成
+		for (int i = 0; i < line.Length; i++)
+		{
+			// ブロック生成
+			block = new PPPanelBlock();
+			block.BaseTransform = m_BlockParent.transform;
+
+			// 座標登録
+			pos = Vector3.zero;
+			pos.x = i * BlockSize - m_Size.x / 2f + BlockHalfSize;
+			pos.y = sideLine != null ? sideLine[0].LocalPosition.y + (BlockSize * (insertHead ? 1 : -1)) : 0;
+			block.LocalPosition = pos;
+
+			// パネル作成
+			if (!empty)
+			{
+				// 使わなくなったパネルを再利用
+				if (m_UnusedPanels.Count > 0)
+				{
+					panel = m_UnusedPanels[0];
+					m_UnusedPanels.RemoveAt(0);
+				}
+				// パネル生成
+				else
+				{
+					panel = Instantiate(PanelTemplate).GetComponent<PPPanel>();
+					panel.gameObject.transform.SetParent(m_BlockParent.transform);
+					m_Panels.Add(panel);
+				}
+
+				// 無効タイプ設定のため左側だけ接続
+				if (i > 0)
+				{
+					block.SetLink(line[i - 1], PlayAreaBlock.Dir.Left);
+				}
+
+				// 無効タイプ設定
+				ignoreTypes.Clear();
+				if (i > 0 && line[i - 1].GetMatchPanelCountDir(PlayAreaBlock.Dir.Left) >= PPGame.Config.MinVanishMatchCount - 1)
+				{
+					ignoreTypes.Add(line[i - 1].AttachedPanel.PanelType);
+				}
+				if (!insertHead && sideLine != null && sideLine[i].GetMatchPanelCountDir(PlayAreaBlock.Dir.Up) >= PPGame.Config.MinVanishMatchCount - 1)
+				{
+					ignoreTypes.Add(sideLine[i].AttachedPanel.PanelType);
+				}
+
+				// パネル初期化
+				panel.Initialize(this, ignoreTypes);
+
+				if (insertHead)
+				{
+						panel.Activate();
+				}
+
+				block.Attach(panel, true);
+
+				m_UsingPanels.Add(panel);
+			}
+
+			line[i] = block;
+		}
+
+		// 隣接するブロックを登録
+		for (int i = 0; i < line.Length; i++)
+		{
+			if (i < line.Length - 1)
+			{
+				line[i].SetLink(line[i + 1], PlayAreaBlock.Dir.Right);
+			}
+			if (i > 0)
+			{
+				line[i].SetLink(line[i - 1], PlayAreaBlock.Dir.Left);
+			}
+			if (sideLine != null)
+			{
+				line[i].SetLink(sideLine[i], insertHead ? PlayAreaBlock.Dir.Down : PlayAreaBlock.Dir.Up);
+
+				if (sideLine[i] != null)
+				{
+					sideLine[i].SetLink(line[i], insertHead ? PlayAreaBlock.Dir.Up : PlayAreaBlock.Dir.Down);
+					if (!insertHead && sideLine[i].AttachedPanel != null)
+					{
+						sideLine[i].AttachedPanel.Activate();
+					}
+				}
+			}
+		}
+
+		// 行を追加
+		if (insertHead)
+		{
+			m_Lines.Insert(0, line);
+		}
+		else
+		{
+			m_Lines.Add(line);
+		}
+
+		return line;
+	}
+	
+	/// <summary>
+	/// 余分な空の行を削除
+	/// </summary>
+	private void DeleteEmptyLine()
+	{
 		bool empty;
-		for (int i = 0; i < m_Lines.Count - 1; i++)
+		for (int i = 0; m_Lines.Count > Height; i++)
 		{
 			empty = true;
 			foreach (PPPanelBlock block in m_Lines[i])
@@ -408,113 +544,43 @@ public class PPPlayArea : MonoBehaviour
 	}
 
 	/// <summary>
-	/// せり上げ時間間隔スキップ
+	/// 妨害パネル作成
 	/// </summary>
-	public void SkipElevateWait()
+	public void CreateDisturbPanel(int width, int height)
 	{
-		m_ElevateWaitTime = 0;
-	}
-
-	/// <summary>
-	/// 新規行追加
-	/// </summary>
-	public void AddNewLine()
-	{
-		// 現在の最後の行を取得
-		PPPanelBlock[] bottomLine = null;
-		if (m_Lines.Count > 0)
+		// 空の行で埋める
+		int emptyLineCount = Height - m_Lines.Count;
+		for (int i = 0; i < emptyLineCount; i++)
 		{
-			bottomLine = m_Lines[m_Lines.Count - 1];
+			AddNewLine(true, true);
 		}
 
-		PPPanelBlock[] line = new PPPanelBlock[m_Width];
-		PPPanel panel;
-		PPPanelBlock block;
-		Vector3 pos;
-		List<PPPanel.Type> ignoreTypes = new List<PPPanel.Type>();
+		// 余分な行を消す
+		DeleteEmptyLine();
 
-		// パネル生成
-		for (int i = 0; i < line.Length; i++)
+		// 行追加
+		List<PPPanelBlock[]> lines = new List<PPPanelBlock[]>();
+		for (int i = 0; i < height; i++)
 		{
-			// ブロック生成
-			block = new PPPanelBlock();
-			block.BaseTransform = m_BlockParent.transform;
-
-			// 座標登録
-			pos = Vector3.zero;
-			pos.x = i * BlockSize - m_Size.x / 2f + BlockHalfSize;
-			pos.y = m_Lines.Count > 0 ? m_Lines[m_Lines.Count - 1][0].LocalPosition.y - BlockSize : 0;
-			block.LocalPosition = pos;
-
-			// 使わなくなったパネルを再利用
-			if (m_UnusedPanels.Count > 0)
-			{
-				panel = m_UnusedPanels[0];
-				m_UnusedPanels.RemoveAt(0);
-			}
-			// パネル生成
-			else
-			{
-				panel = Instantiate(PanelTemplate).GetComponent<PPPanel>();
-				panel.gameObject.transform.SetParent(m_BlockParent.transform);
-				m_Panels.Add(panel);
-			}
-
-			// 無効タイプ設定のため左側だけ接続
-			if (i > 0)
-			{
-				block.SetLink(line[i - 1], PlayAreaBlock.Dir.Left);
-			}
-
-			// 無効タイプ設定
-			ignoreTypes.Clear();
-			if (i > 0 && line[i - 1].GetMatchPanelCountDir(PlayAreaBlock.Dir.Left) >= PPGame.Config.MinVanishMatchCount - 1)
-			{
-				ignoreTypes.Add(line[i - 1].AttachedPanel.PanelType);
-			}
-			if (bottomLine != null && bottomLine[i].GetMatchPanelCountDir(PlayAreaBlock.Dir.Up) >= PPGame.Config.MinVanishMatchCount - 1)
-		    {
-				ignoreTypes.Add(bottomLine[i].AttachedPanel.PanelType);
-		    }
-
-			// パネル初期化
-			panel.Initialize(this, ignoreTypes);
-
-			block.Attach(panel, true);
-
-			line[i] = block;
-
-			m_UsingPanels.Add(panel);
+			lines.Add(AddNewLine(false, true));
 		}
-
-		// 隣接するブロックを登録
-		for (int i = 0; i < line.Length; i++)
+		
+		// 妨害パネル化
+		PPPanel left, right, up, down;
+		for (int i = 0; i < lines.Count; i++)
 		{
-			if (i < line.Length - 1)
+			for (int j = 0; j < lines[i].Length; j++)
 			{
-				line[i].SetLink(line[i + 1], PlayAreaBlock.Dir.Right);
-			}
-			if (i > 0)
-			{
-				line[i].SetLink(line[i - 1], PlayAreaBlock.Dir.Left);
-			}
-			if (bottomLine != null)
-			{
-				line[i].SetLink(bottomLine[i], PlayAreaBlock.Dir.Up);
-
-				if (bottomLine[i] != null)
+				if (lines[i][j].AttachedPanel != null)
 				{
-					bottomLine[i].SetLink(line[i], PlayAreaBlock.Dir.Down);
-					if (bottomLine[i].AttachedPanel != null)
-					{
-						bottomLine[i].AttachedPanel.Activate();
-					}
+					left = j > 0 ? lines[i][j - 1].AttachedPanel : null;
+					right = j + 1 < lines[i].Length ? lines[i][j + 1].AttachedPanel : null;
+					up = i + 1 < lines.Count ? lines[i + 1][j].AttachedPanel : null;
+					down = i > 0 ? lines[i - 1][j].AttachedPanel : null;
+					lines[i][j].AttachedPanel.SetDisturbance(true, left, right, up, down);
 				}
 			}
 		}
-
-		// 行を追加
-		m_Lines.Add(line);
 	}
 
 	/// <summary>
@@ -551,7 +617,7 @@ public class PPPlayArea : MonoBehaviour
 	public PPPanelBlock GetBlock(Vector3 worldPosition)
 	{
 		Vector2i grid = ConvertWorldToGrid(worldPosition);
-		if (grid.x >= 0 && grid.x < m_Width && grid.y >= 0 && grid.y < m_Lines.Count)
+		if (grid.x >= 0 && grid.x < Width && grid.y >= 0 && grid.y < m_Lines.Count)
 		{
 			return GetBlock(grid);
 		}
@@ -603,7 +669,7 @@ public class PPPlayArea : MonoBehaviour
 		{
 			foreach (PPPanelBlock block in line)
 			{
-				if (block.AttachedPanel != null && !block.VanishRequested && block.GetMatchPanelBlocks(out match))
+				if (block.AttachedPanel != null && !block.AttachedPanel.IsDisturbance && !block.VanishRequested && block.GetMatchPanelBlocks(out match))
 				{
 					foreach (PPPanelBlock item in match)
 					{

@@ -52,7 +52,7 @@ public class PPPanelBlock : PlayAreaBlock
 	/// </summary>
 	private void GetMatchPanelBlocks(ref List<PPPanelBlock> match, PPPanel.Type type, Dir dir, bool first = true)
 	{
-		if (m_Panel == null || m_Panel.IsLocked() || m_Panel.PanelType != type)
+		if (m_Panel == null || m_Panel.IsLocked() || m_Panel.PanelType != type || m_Panel.IsDisturbance)
 		{
 			return;
 		}
@@ -197,7 +197,7 @@ public class PPPanelBlock : PlayAreaBlock
 	/// <summary>
 	/// 最下段の空ブロックを取得
 	/// </summary>
-	public PPPanelBlock GetMostUnderEmptyBlock()
+	public PPPanelBlock GetMostUnderEmptyBlock(ref int depth)
 	{
 		// 真下にブロックがある
 		PPPanelBlock under = GetLink(Dir.Down) as PPPanelBlock;
@@ -206,7 +206,8 @@ public class PPPanelBlock : PlayAreaBlock
 			// 真下が空なら更に下へ
 			if (under.AttachedPanel == null)
 			{
-				return (GetLink(Dir.Down) as PPPanelBlock).GetMostUnderEmptyBlock();
+				++depth;
+				return (GetLink(Dir.Down) as PPPanelBlock).GetMostUnderEmptyBlock(ref depth);
 			}
 //			// 真下のパネルがロック中
 //			else if (under.AttachedPanel.IsLoced())
