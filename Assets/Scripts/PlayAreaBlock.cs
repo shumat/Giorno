@@ -91,6 +91,37 @@ public class PlayAreaBlock
 	}
 
 	/// <summary>
+	/// 指定数分の隣接ブロック取得
+	/// </summary>
+	public void GetLinks(out List<PlayAreaBlock> links, Dir dir, int count, bool includeSelf)
+	{
+		PlayAreaBlock block = this;
+
+		 links = new List<PlayAreaBlock>();
+
+		if (includeSelf)
+		{
+			links.Add(block);
+		}
+
+		for (int i = 0; i < count; i++)
+		{
+			block = block.GetLink(dir);
+			if (block != null)
+			{
+				if (dir == Dir.Left || dir == Dir.Up)
+					links.Insert(0, block);
+				else
+					links.Add(block);
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+
+	/// <summary>
 	/// 隣接タイプを反転
 	/// </summary>
 	public static Dir ConvertReverseDir(Dir dir)

@@ -41,7 +41,7 @@ public class PPPlayer : PlayerBase
 
 		if (Input.GetKeyDown(KeyCode.D))
 		{
-			playArea.CreateDisturbPanel(playArea.Width, 1);
+			playArea.CreateDisturbPanel(playArea.Width, 2);
 		}
 
 		// タッチした瞬間

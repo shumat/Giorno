@@ -306,10 +306,10 @@ public class PPPlayArea : MonoBehaviour
 		{
 			foreach (PPPanelBlock block in m_Lines[i])
 			{
-				if (!block.IsLoced() && block.AttachedPanel != null)
+				if (!block.IsLoced() && block.AttachedPanel != null && block.AttachedPanel.IsValidFall())
 				{
 					// 落下地点取得
-					if ((fallTarget = block.AttachedPanel.GetFallTarget()) != null && fallTarget != block)
+					if ((fallTarget = block.GetMostUnderEmptyBlock()) != null && fallTarget != block)
 					{
 						// 落下待機開始
 						block.AttachedPanel.BeginFallReady(block);

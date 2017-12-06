@@ -228,6 +228,15 @@ public class PPPanelBlock : PlayAreaBlock
 	}
 
 	/// <summary>
+	/// 最下段の空ブロックを取得
+	/// </summary>
+	public PPPanelBlock GetMostUnderEmptyBlock()
+	{
+		int depth = 0;
+		return GetMostUnderEmptyBlock(ref depth);
+	}
+
+	/// <summary>
 	/// 上のパネルが落下待機中?
 	/// </summary>
 	public bool GetIsUpperBlockFallWait()
