@@ -151,6 +151,17 @@ public class PPPanelBlock : PlayAreaBlock
 	}
 
 	/// <summary>
+	/// 妨害パネル分解
+	/// </summary>
+	public void DissolveDisturbance()
+	{
+		if (m_Panel != null && m_Panel.IsDisturbance)
+		{
+			m_Panel.Dissolve();
+		}
+	}
+
+	/// <summary>
 	/// パネル座標更新
 	/// </summary>
 	public void UpdatePanelPosition()

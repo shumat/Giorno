@@ -163,13 +163,23 @@ public class PPConfig : ScriptableObject
 		get { return m_PanelSwapSpeed; }
 	}
 	
-	/// <summary> パネル消滅ラグ </summary>
+	/// <summary> パネル消滅ディレイ </summary>
 	[SerializeField]
 	private float m_PanelVanishDelay = 0.2f;
 	
-	/// <summary> パネル消滅ラグ </summary>
+	/// <summary> パネル消滅ディレイ </summary>
 	public float PanelVanishDelay
 	{
 		get { return m_PanelVanishDelay; }
+	}
+
+	/// <summary> 妨害パネル分解ディレイ </summary>
+	[SerializeField]
+	private float m_PanelDissolveDelay = 0.2f;
+
+	/// <summary> 妨害パネル分解ディレイ </summary>
+	public float PanelDissolveDelay
+	{
+		get { return m_PanelDissolveDelay; }
 	}
 }

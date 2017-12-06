@@ -182,6 +182,16 @@ public class PPPlayArea : MonoBehaviour
 					{
 						existChainSource = true;
 					}
+					
+					// 妨害パネル解凍
+					for (int i = 0; i < block.AllLink.Length; i++)
+					{
+						PPPanelBlock side = block.AllLink[i] as PPPanelBlock;
+						if (side != null && side.AttachedPanel != null && side.AttachedPanel.IsDisturbance)
+						{
+							side.DissolveDisturbance();
+						}
+					}
 				}
 			}
 
@@ -577,7 +587,7 @@ public class PPPlayArea : MonoBehaviour
 					right = j + 1 < lines[i].Length ? lines[i][j + 1].AttachedPanel : null;
 					up = i + 1 < lines.Count ? lines[i + 1][j].AttachedPanel : null;
 					down = i > 0 ? lines[i - 1][j].AttachedPanel : null;
-					lines[i][j].AttachedPanel.SetDisturbance(true, left, right, up, down);
+					lines[i][j].AttachedPanel.SetDisturbance(left, right, up, down);
 				}
 			}
 		}

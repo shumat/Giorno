@@ -28,6 +28,7 @@ public class PPPanel : MonoBehaviour
 		None,
 		Move,
 		Vanish,
+		Dissolve,
 		FallReady,
 		Fall,
 	}
@@ -135,14 +136,33 @@ public class PPPanel : MonoBehaviour
 	/// <summary>
 	/// 妨害パネル設定
 	/// </summary>
-	public void SetDisturbance(bool isDisturbance, PPPanel leftLink, PPPanel rightLink, PPPanel upLink, PPPanel downLink)
+	public void SetDisturbance(PPPanel leftLink, PPPanel rightLink, PPPanel upLink, PPPanel downLink)
 	{
-		IsDisturbance = isDisturbance;
+		IsDisturbance = true;
 		m_DisturbLinks[(int)PlayAreaBlock.Dir.Left] = leftLink;
 		m_DisturbLinks[(int)PlayAreaBlock.Dir.Right] = rightLink;
 		m_DisturbLinks[(int)PlayAreaBlock.Dir.Up] = upLink;
 		m_DisturbLinks[(int)PlayAreaBlock.Dir.Down] = downLink;
 		m_SpriteRenderer.color = Color.gray;
+	}
+
+	/// <summary>
+	/// 妨害パネル解除
+	/// </summary>
+	private void UnsetDisturbance()
+	{
+		IsDisturbance = false;
+		m_SpriteRenderer.color = Color.white;
+
+		// 連結情報破棄
+		for (int i = 0; i < m_DisturbLinks.Length; i++)
+		{
+			if (m_DisturbLinks[i] != null)
+			{
+				m_DisturbLinks[i].m_DisturbLinks[(int)PlayAreaBlock.ConvertReverseDir((PlayAreaBlock.Dir)i)] = null;
+				m_DisturbLinks[i] = null;
+			}
+		}
 	}
 
 	/// <summary>
@@ -243,16 +263,16 @@ public class PPPanel : MonoBehaviour
 		{
 			m_State = State.Fall;
 
-			// 連結妨害パネルも落下
+			// 最下段なら連結妨害パネルも落下
 			if (IsDisturbance && m_DisturbLinks[(int)PlayAreaBlock.Dir.Down] == null)
 			{
-				for (int i = 0; i < m_DisturbLinks.Length; i++)
+				if (m_DisturbLinks[(int)PlayAreaBlock.Dir.Left] != null)
 				{
-					PlayAreaBlock.Dir dir = (PlayAreaBlock.Dir)i;
-					if ((dir == PlayAreaBlock.Dir.Left || dir == PlayAreaBlock.Dir.Right) && m_DisturbLinks[i] != null)
-					{
-						m_DisturbLinks[i].BeginFall(startBlock.GetLink(dir) as PPPanelBlock);
-					}
+					m_DisturbLinks[(int)PlayAreaBlock.Dir.Left].BeginFall(startBlock.GetLink(PlayAreaBlock.Dir.Left) as PPPanelBlock);
+				}
+				if (m_DisturbLinks[(int)PlayAreaBlock.Dir.Right] != null)
+				{
+					m_DisturbLinks[(int)PlayAreaBlock.Dir.Right].BeginFall(startBlock.GetLink(PlayAreaBlock.Dir.Right) as PPPanelBlock);
 				}
 			}
 
@@ -420,6 +440,164 @@ public class PPPanel : MonoBehaviour
 		m_PlayingCoroutine = null;
 		gameObject.SetActive(false);
 	}
+	
+	/// <summary>
+	/// 妨害パネル分解
+	/// </summary>
+	public int Dissolve(int dissolveCount = 0)
+	{
+		if (m_State == State.None && IsDisturbance)
+		{
+			PPPanel bottomRight = null;
+			bottomRight = GetEndDisturb(PlayAreaBlock.Dir.Down);
+			bottomRight = bottomRight.GetEndDisturb(PlayAreaBlock.Dir.Right);
+
+			// 全連結妨害パネルを取得
+			List<PPPanel> disturbances = new List<PPPanel>();
+			List<PPPanelBlock> arounds = new List<PPPanelBlock>();
+			List<PPPanel> vertical = null;
+			List<PPPanel> horizontal = null;
+			// 右下から上端にかけてのパネル
+			bottomRight.GetDisturbLinks(out vertical, PlayAreaBlock.Dir.Up);
+			vertical.Insert(0, bottomRight);
+			int line = 0;
+			foreach (PPPanel vertPanel in vertical)
+			{
+				// 右端から左端にかけてのパネル
+				vertPanel.GetDisturbLinks(out horizontal, PlayAreaBlock.Dir.Left);
+				horizontal.Insert(0, vertPanel);
+				foreach (PPPanel horizPanel in horizontal)
+				{
+					disturbances.Add(horizPanel);
+
+					// 水平方向の周囲のブロックを保持
+					if (line == 0 && horizPanel.Block != null)
+						arounds.Add(horizPanel.Block.GetLink(PlayAreaBlock.Dir.Down) as PPPanelBlock);
+					if (line == vertical.Count - 1 && horizPanel.Block != null)
+						arounds.Add(horizPanel.Block.GetLink(PlayAreaBlock.Dir.Up) as PPPanelBlock);
+				}
+
+				// 垂直方向の周囲のブロックを保持
+				if (horizontal.Count > 0)
+				{
+					if (horizontal[0].Block != null)
+						arounds.Add(horizontal[0].Block.GetLink(PlayAreaBlock.Dir.Right) as PPPanelBlock);
+					if (horizontal[horizontal.Count - 1].Block != null)
+						arounds.Add(horizontal[horizontal.Count - 1].Block.GetLink(PlayAreaBlock.Dir.Left) as PPPanelBlock);
+				}
+
+				++line;
+			}
+
+			// 全連結妨害パネルを分解準備
+			int currentCount = 0;
+			foreach (PPPanel panel in disturbances)
+			{
+				if (panel.StandbyDissolve())
+				{
+					++currentCount;
+				}
+			}
+
+			// 連結妨害パネルと接している別の妨害パネルも分解
+			foreach (PPPanelBlock block in arounds)
+			{
+				if (block != null && block.AttachedPanel != null && block.AttachedPanel.IsDisturbance)
+				{
+					currentCount += block.AttachedPanel.Dissolve(dissolveCount + currentCount);
+				}
+			}
+
+			// 全連結妨害パネルを分解
+			float delay = dissolveCount * PPGame.Config.PanelDissolveDelay;
+			float endTime = delay + currentCount * PPGame.Config.PanelDissolveDelay;
+			foreach (PPPanel panel in disturbances)
+			{
+				panel.BeginDissolve(panel.m_DisturbLinks[(int)PlayAreaBlock.Dir.Down] == null, delay, endTime);
+				delay += PPGame.Config.PanelDissolveDelay;
+			}
+
+			return currentCount;
+		}
+
+		return 0;
+	}
+
+	/// <summary>
+	/// 妨害パネル分解準備
+	/// </summary>
+	/// <returns></returns>
+	private bool StandbyDissolve()
+	{
+		if (m_State == State.None && IsDisturbance)
+		{
+			m_State = State.Dissolve;
+			return true;
+		}
+		return false;
+	}
+
+	/// <summary>
+	/// 妨害パネル分解開始
+	/// </summary>
+	private void BeginDissolve(bool unsetDisturb, float delay, float endTime)
+	{
+		if (m_State == State.Dissolve && IsDisturbance)
+		{
+			StartCoroutine(m_PlayingCoroutine = Dissolving(unsetDisturb, delay, endTime));
+		}
+	}
+	
+	/// <summary>
+	/// 妨害パネル分解
+	/// </summary>
+	private IEnumerator Dissolving(bool unsetDisturb, float delay, float endTime)
+	{
+		// 初回は処理しない
+		yield return null;
+
+		// 明滅
+		float time = 0f;
+		int count = 0;
+		while (time < 0.5f)
+		{
+			time += Time.deltaTime;
+			++count;
+			m_SpriteRenderer.color = count % 16 < 8 ? Color.gray : Color.white;
+			yield return null;
+		}
+
+		m_SpriteRenderer.color = Color.yellow;
+
+		// 待機
+		float wait = delay;
+		while (wait > 0)
+		{
+			wait -= Time.deltaTime;
+			yield return null;
+		}
+
+		if (unsetDisturb)
+		{
+			UnsetDisturbance();
+		}
+		else
+		{
+			m_SpriteRenderer.color = Color.gray;
+		}
+
+		// 全体の終了を待つ
+		wait = endTime - delay + wait;
+		while (wait > 0)
+		{
+			wait -= Time.deltaTime;
+			yield return null;
+		}
+
+		m_State = State.None;
+		m_PlayingCoroutine = null;
+		yield return null;
+	}
 
 	/// <summary>
 	/// 一時停止
@@ -453,27 +631,26 @@ public class PPPanel : MonoBehaviour
 	{
 		if (IsDisturbance && Block != null)
 		{
-			// 最下段の連結妨害パネルまで掘る
-			List<PPPanel> disturbLinks = null;
-			GetDisturbLinks(out disturbLinks, PlayAreaBlock.Dir.Down);
-			PPPanel mostUnderDisturb = disturbLinks.Count  == 0 ? this : disturbLinks[disturbLinks.Count - 1];
-			PPPanelBlock mostUnderDisturbBlock = Block.GetLink(PlayAreaBlock.Dir.Down, disturbLinks.Count) as PPPanelBlock;
-
-			// 水平方向の連結妨害パネルブロックを取得
-			List<PlayAreaBlock> links;
-			List<PlayAreaBlock> horizontal = new List<PlayAreaBlock>();
-			mostUnderDisturbBlock.GetLinks(out links, PlayAreaBlock.Dir.Left, mostUnderDisturb.GetDisturbLinkCount(PlayAreaBlock.Dir.Left), true);
+			// 最下段の水平方向の連結妨害パネルブロックを取得
+			List<PPPanel> links;
+			List<PPPanel> horizontal = new List<PPPanel>();
+			PPPanel mostUnderDisturb = GetEndDisturb(PlayAreaBlock.Dir.Down);
+			horizontal.Add(mostUnderDisturb);
+			mostUnderDisturb.GetDisturbLinks(out links, PlayAreaBlock.Dir.Left);
 			horizontal.AddRange(links);
-			mostUnderDisturbBlock.GetLinks(out links, PlayAreaBlock.Dir.Right, mostUnderDisturb.GetDisturbLinkCount(PlayAreaBlock.Dir.Right), false);
+			mostUnderDisturb.GetDisturbLinks(out links, PlayAreaBlock.Dir.Right);
 			horizontal.AddRange(links);
 
 			// 最下段の連結妨害パネルの直下が空ブロックか調べる
-			foreach (PlayAreaBlock block in horizontal)
+			foreach (PPPanel disturb in horizontal)
 			{
-				PPPanelBlock underBlock = block.GetLink(PlayAreaBlock.Dir.Down) as PPPanelBlock;
-				if (underBlock != null && underBlock.AttachedPanel != null)
+				if (disturb.Block != null)
 				{
-					return false;
+					PPPanelBlock underBlock = disturb.Block.GetLink(PlayAreaBlock.Dir.Down) as PPPanelBlock;
+					if (underBlock != null && underBlock.AttachedPanel != null)
+					{
+						return false;
+					}
 				}
 			}
 		}
@@ -482,72 +659,21 @@ public class PPPanel : MonoBehaviour
 	}
 
 	/// <summary>
-	/// 落下地点取得
+	/// 指定方向の終端の連結妨害パネル取得
 	/// </summary>
-	public PPPanelBlock GetFallTarget(PPPanelBlock startBlock = null)
+	private PPPanel GetEndDisturb(PlayAreaBlock.Dir dir)
 	{
-		// 開始地点が空なら現在のブロックを使用
-		if (startBlock == null)
-		{
-			startBlock = Block;
-		}
-
-		if (startBlock == null)
-		{
-			return null;
-		}
-
-		PPPanelBlock fallTarget = null;
-		int depth = 0;
-
-		// 妨害パネル
+		PPPanel dest = null;
 		if (IsDisturbance)
 		{
-			int minDepth;
-
-			// 現在位置から空ブロックまでの距離を取得
-			startBlock.GetMostUnderEmptyBlock(ref depth);
-			minDepth = depth;
-
-			// 直下にパネルあり
-			if (minDepth == 0)
+			PPPanel t = this;
+			while (t != null)
 			{
-				return startBlock;
+				dest = t;
+				t = t.m_DisturbLinks[(int)dir];
 			}
-
-			// 最下段の連結妨害パネルまで掘る
-			List<PPPanel> disturbLinks = null;
-			GetDisturbLinks(out disturbLinks, PlayAreaBlock.Dir.Down);
-			disturbLinks = new List<PPPanel>();
-			PPPanel mostUnderDisturb = disturbLinks.Count  == 0 ? this : disturbLinks[disturbLinks.Count - 1];
-			PPPanelBlock mostUnderDisturbBlock = startBlock.GetLink(PlayAreaBlock.Dir.Down, disturbLinks.Count) as PPPanelBlock;
-
-			// 最下段の連結妨害パネルから空ブロックまでの距離を取得
-			for (int i = 0; i < m_DisturbLinks.Length; i++)
-			{
-				PlayAreaBlock.Dir dir = (PlayAreaBlock.Dir)i;
-				if (dir == PlayAreaBlock.Dir.Left || dir == PlayAreaBlock.Dir.Right)
-				{
-					mostUnderDisturb.GetDisturbLinks(out disturbLinks, dir);
-					for (int j = 0; j < disturbLinks.Count; j++)
-					{
-						depth  = 0;
-						(mostUnderDisturbBlock.GetLink(dir, j + 1) as PPPanelBlock).GetMostUnderEmptyBlock(ref depth);
-						minDepth = Mathf.Min(minDepth, depth);
-					}
-				}
-			}
-
-			// 最小の空ブロック距離分掘る
-			fallTarget = startBlock.GetLink(PlayAreaBlock.Dir.Down, minDepth) as PPPanelBlock;
 		}
-		// 通常のパネル
-		else
-		{
-			fallTarget = startBlock.GetMostUnderEmptyBlock(ref depth);
-		}
-
-		return fallTarget;
+		return dest;
 	}
 
 	/// <summary>

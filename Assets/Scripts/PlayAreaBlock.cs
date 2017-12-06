@@ -15,6 +15,14 @@ public class PlayAreaBlock
 		Down,
 	}
 
+	/// <summary>
+	/// 方向数
+	/// </summary>
+	public int DirCount
+	{
+		get { return m_Links.Length; }
+	}
+
 	/// <summary> ベーストランスフォーム </summary>
 	protected Transform m_BaseTransform = null;
 
@@ -58,6 +66,14 @@ public class PlayAreaBlock
 	protected PlayAreaBlock[] m_Links = new PlayAreaBlock[System.Enum.GetNames(typeof(Dir)).Length];
 
 	/// <summary>
+	/// 全隣接ブロック
+	/// </summary>
+	public PlayAreaBlock[] AllLink
+	{
+		get { return m_Links; }
+	}
+
+	/// <summary>
 	/// 隣接ブロック登録
 	/// </summary>
 	public void SetLink(PlayAreaBlock block, Dir dir)
@@ -72,7 +88,7 @@ public class PlayAreaBlock
 	{
 		return m_Links[(int)dir];
 	}
-	
+
 	/// <summary>
 	/// 隣接ブロック取得
 	/// </summary>
