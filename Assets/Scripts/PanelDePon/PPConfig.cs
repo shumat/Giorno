@@ -182,4 +182,55 @@ public class PPConfig : ScriptableObject
 	{
 		get { return m_PanelDissolveDelay; }
 	}
+
+	public int GetChainDamageLevel(int count)
+	{
+		if (count > 1)
+		{
+			return count - 1 + 4;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+
+	public int[] GetConcurrentDamageLevels(int count)
+	{
+		List<int> levels = new List<int>();
+		if (count >= 4)
+		{
+			if (count <= 7)
+			{
+				levels.Add(count - 3);
+			}
+			else if (count <= 12)
+			{
+				levels.Add((count / 2) - 3);
+				levels.Add((count / 2) - 3);
+			}
+			else if (count == 13)
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					levels.Add(5);
+				}
+			}
+		}
+		return levels.ToArray();
+	}
+
+	public Vector2i GetDisturbanceSize(int level)
+	{
+		Vector2i size =new Vector2i(PlayAreaWidth, 1);
+		if (level <= 4)
+		{
+			size.x = 2 + level;
+		}
+		else
+		{
+			size.y = level - 3;
+		}
+		return size;
+	}
 }

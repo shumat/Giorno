@@ -237,7 +237,7 @@ public class PPPlayArea : MonoBehaviour
 			if (m_ChainCount > 0)
 			{
 				m_ElevateStopTime = PPGame.Config.GetElevateStopTime(m_ChainCount);
-				(Game.Player as PPPlayer).ChainEvent(m_ChainCount);
+				(Game.Player as PPPlayer).OnChainEnd(m_ChainCount + 1);
 			}
 
 			m_ChainCount = 0;
@@ -352,10 +352,10 @@ public class PPPlayArea : MonoBehaviour
 			m_ElevateWaitTime = MaxElevateWaitTime;
 		}
 
-		// 消滅中か落下中のパネルがあったらせり上げ不可
+		// 消滅/落下/分解中のパネルがあったらせり上げ不可
 		foreach (PPPanel panel in m_UsingPanels)
 		{
-			if (panel.CurrentState == PPPanel.State.Vanish || panel.CurrentState == PPPanel.State.Fall)
+			if (panel.CurrentState == PPPanel.State.Vanish || panel.CurrentState == PPPanel.State.Fall || panel.CurrentState == PPPanel.State.Dissolve)
 			{
 				return;
 			}
@@ -403,7 +403,7 @@ public class PPPlayArea : MonoBehaviour
 	/// <summary>
 	/// 新規行追加
 	/// </summary>
-	public PPPanelBlock[] AddNewLine(bool empty, bool insertHead)
+	public PPPanelBlock[] AddNewLine(bool empty, bool insertHead, List<int> emptyRow = null)
 	{
 		// 現在の最上段/最下段の行を取得
 		PPPanelBlock[] sideLine = null;
@@ -432,7 +432,7 @@ public class PPPlayArea : MonoBehaviour
 			block.LocalPosition = pos;
 
 			// パネル作成
-			if (!empty)
+			if (!empty && (emptyRow == null || !emptyRow.Contains(i)))
 			{
 				// 使わなくなったパネルを再利用
 				if (m_UnusedPanels.Count > 0)
@@ -567,12 +567,23 @@ public class PPPlayArea : MonoBehaviour
 
 		// 余分な行を消す
 		DeleteEmptyLine();
+		
+		// パネルを置かない列
+		List<int> emptyRow = new List<int>();
+		int startBlock = Game.Controller.SyncRand.Next(Width - width + 1);
+		for (int i = 0; i < Width; i++)
+		{
+			if (i < startBlock || i >= startBlock + width)
+			{
+				emptyRow.Add(i);
+			}
+		}
 
 		// 行追加
 		List<PPPanelBlock[]> lines = new List<PPPanelBlock[]>();
 		for (int i = 0; i < height; i++)
 		{
-			lines.Add(AddNewLine(false, true));
+			lines.Add(AddNewLine(false, true, emptyRow));
 		}
 		
 		// 妨害パネル化
