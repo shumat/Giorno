@@ -6,17 +6,26 @@ using UnityEngine.Networking;
 
 public class MatchingManager : MonoBehaviour
 {
-	/// <summary> メニュー </summary>
-	private ObjectSelector m_Menu = null;
-
 	/// <summary> LANを使用 </summary>
 	private bool m_UseLocalNetwork = false;
+
+	/// <summary> デフォルトポート番号 </summary>
+	private int m_DefaultNetworkPort = 0;
+
+	/// <summary> ルーム検索時間 </summary>
+	private float m_RoomFindTime = 2f;
+
+	/// <summary> ルーム参加時に自分以外のプレイヤーを待つ時間 </summary>
+	private float m_OtherPlayerCloneWaitTime = 1f;
 
 	/// <summary> マッチングコルーチン </summary>
 	private IEnumerator m_MatchingCoroutine = null;
 
-	/// <summary> デフォルトポート番号 </summary>
-	private int m_DefaultNetworkPort = 0;
+	/// <summary> マッチキャンセル可能? </summary>
+	private bool m_IsValidMatchCancel = true;
+
+	/// <summary> メニュー </summary>
+	private ObjectSelector m_Menu = null;
 
 	/// <summary>
 	/// 生成
@@ -35,6 +44,8 @@ public class MatchingManager : MonoBehaviour
 		m_DefaultNetworkPort = NetworkGameManager.Instance.networkPort;
 	}
 
+	#region Match
+
 	/// <summary>
 	/// マッチング
 	/// </summary>
@@ -45,11 +56,16 @@ public class MatchingManager : MonoBehaviour
 		NetworkGameManager nm = NetworkGameManager.Instance;
 
 		// マッチ開始
-		nm.StartMatchMaker();
-
-		float findTime = 1f;
-		while (findTime > 0f)
+		if (nm.matchMaker == null)
 		{
+			nm.StartMatchMaker();
+		}
+
+		float waitTime = m_RoomFindTime;
+		while (waitTime > 0f)
+		{
+			float startTime = Time.time;
+
 			// ルーム検索
 			yield return nm.FindMatch();
 
@@ -62,7 +78,11 @@ public class MatchingManager : MonoBehaviour
 				break;
 			}
 
-			findTime -= Time.deltaTime;
+			nm.StopFindMatch();
+
+			waitTime -= Time.time - startTime + Time.deltaTime;
+
+			yield return null;
 		}
 
 		// ルーム未参加ならルーム作成
@@ -73,14 +93,26 @@ public class MatchingManager : MonoBehaviour
 			// ルーム作成に失敗したらリスタート
 			if (!nm.IsCreatedMatch)
 			{
-				StartCoroutine(Matching());
+				nm.StopMatchMaker();
+				StartCoroutine(m_MatchingCoroutine = Matching());
 				yield break;
 			}
 		}
 
 		// メンバーが揃うまで待機
-		while (!nm.IsMatchComplete)
+		waitTime = m_OtherPlayerCloneWaitTime;
+		while (NetworkGameManager.Instance.PlayerCount < nm.matchSize)
 		{
+			// 自分以外のプレイヤーが一定時間いなければ退室
+			if (nm.IsJoinedMatch && waitTime < 0 && NetworkGameManager.Instance.PlayerCount <= 1)
+			{
+				Debug.LogWarning("Host player not found");
+				yield return nm.DropMatch();
+				StartCoroutine(m_MatchingCoroutine = Matching());
+				yield break;
+			}
+			waitTime -= Time.deltaTime;
+
 			yield return null;
 		}
 
@@ -101,7 +133,7 @@ public class MatchingManager : MonoBehaviour
 
 		// クライアントとして開始
 		nm.StartClient();
-		float connectWait = 1f;
+		float connectWait = m_RoomFindTime;
 		while (!nm.IsClientConnected() && connectWait > 0f)
 		{
 			connectWait -= Time.deltaTime;
@@ -123,7 +155,7 @@ public class MatchingManager : MonoBehaviour
 		}
 
 		// メンバーが揃うまで待機
-		while (!nm.IsMatchComplete)
+		while (NetworkGameManager.Instance.PlayerCount < nm.matchSize)
 		{
 			yield return null;
 		}
@@ -131,6 +163,18 @@ public class MatchingManager : MonoBehaviour
 		// ゲーム開始
 		StartCoroutine(StartGame(true));
 	}
+
+	/// <summary>
+	/// LAN使用切り替え
+	/// </summary>
+	public void ToggleLocalNetworkUsing()
+	{
+		m_UseLocalNetwork = !m_UseLocalNetwork;
+	}
+
+	#endregion
+
+	#region Start
 
 	/// <summary>
 	/// ゲーム開始
@@ -184,23 +228,40 @@ public class MatchingManager : MonoBehaviour
 		StartCoroutine(StartGame(false));
 	}
 
+	#endregion
+
+	#region Cancel
+	
+	/// <summary>
+	/// マッチキャンセル開始
+	/// </summary>
+	public void BeginMatchCancel()
+	{
+		if (m_IsValidMatchCancel)
+		{
+			StartCoroutine(CancelMatch());
+		}
+	}
+
 	/// <summary>
 	/// マッチキャンセル
 	/// </summary>
-	public void CancelMatch()
+	public IEnumerator CancelMatch()
 	{
+		m_IsValidMatchCancel = false;
+
 		// マッチング中止
 		StopCoroutine(m_MatchingCoroutine);
 
 		// ルーム解散
 		if (NetworkGameManager.Instance.IsCreatedMatch)
 		{
-			NetworkGameManager.Instance.DestroyMatch();
+			yield return NetworkGameManager.Instance.DestroyMatch();
 		}
 		// ルーム退室
 		if (NetworkGameManager.Instance.IsJoinedMatch)
 		{
-			NetworkGameManager.Instance.DropMatch();
+			yield return NetworkGameManager.Instance.DropMatch();
 		}
 
 		// ローカルマッチ停止
@@ -210,13 +271,8 @@ public class MatchingManager : MonoBehaviour
 		NetworkGameManager.Instance.DisableMatchMaker();
 
 		m_Menu.SelectByName("GameMode");
+		m_IsValidMatchCancel = true;
 	}
 
-	/// <summary>
-	/// LAN使用切り替え
-	/// </summary>
-	public void ToggleLocalNetworkUsing()
-	{
-		m_UseLocalNetwork = !m_UseLocalNetwork;
-	}
+	#endregion
 }

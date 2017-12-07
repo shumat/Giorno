@@ -130,6 +130,9 @@ public class NetworkGameManager : NetworkManager
 
 	/// <summary> ルーム参加した? </summary>
 	public bool IsJoinedMatch { get; private set; }
+	
+	/// <summary> 無効なマッチID </summary>
+	private List<ulong> m_IgnoreMatchId = new List<ulong>();
 
 	/// <summary>
 	/// ローカルマッチ停止
@@ -156,7 +159,6 @@ public class NetworkGameManager : NetworkManager
 		if (matchMaker != null)
 		{
 			StopMatchMaker();
-			Debug.Log("StopMatchMaker");
 		}
 	}
 
@@ -167,9 +169,8 @@ public class NetworkGameManager : NetworkManager
 	{
 		if (!IsCreatedMatch && matchMaker != null && matchInfo == null)
 		{
-			Debug.Log("CreateMatch");
 			System.DateTime now = System.DateTime.Now;
-			matchName = "RM" + now.Hour.ToString() + now.Minute.ToString() + now.Second.ToString();
+			matchName = now.Hour.ToString() + now.Minute.ToString() + now.Second.ToString();
 			return matchMaker.CreateMatch(matchName, matchSize, true, "", "", "", 0, 0, OnMatchCreate);
 		}
 		return null;
@@ -182,6 +183,11 @@ public class NetworkGameManager : NetworkManager
 	{
 		base.OnMatchCreate(success, extendedInfo, match);
 		IsCreatedMatch = success;
+
+		if (success)
+			Debug.Log("Match create succeed");
+		else
+			Debug.LogWarning("Match create failed");
 	}
 
 	/// <summary>
@@ -191,12 +197,28 @@ public class NetworkGameManager : NetworkManager
 	{
 		if (matchMaker != null && matchInfo != null)
 		{
-			Debug.Log("DestroyMatch");
-			ReleasePlayer();
-			IsCreatedMatch = false;
 			return matchMaker.DestroyMatch(matchInfo.networkId, matchInfo.domain, OnDestroyMatch);
 		}
 		return null;
+	}
+
+	/// <summary>
+	/// ルーム解散通知
+	/// </summary>
+	public override void OnDestroyMatch(bool success, string extendedInfo)
+	{
+		base.OnDestroyMatch(success, extendedInfo);
+		if (success)
+		{
+			IsCreatedMatch = false;
+			ReleasePlayer();
+			StopServer();
+		}
+
+		if (success)
+			Debug.Log("Match destroy succeed");
+		else
+			Debug.LogWarning("Match destroy failed");
 	}
 
 	/// <summary>
@@ -206,7 +228,6 @@ public class NetworkGameManager : NetworkManager
 	{
 		if (matchMaker != null && matchInfo == null && matches == null)
 		{
-			Debug.Log("FindMatch");
 			return matchMaker.ListMatches(0, 20, "", false, 0, 0, OnMatchList);
 		}
 		return null;
@@ -218,7 +239,6 @@ public class NetworkGameManager : NetworkManager
 	public void StopFindMatch()
 	{
 		matches = null;
-		Debug.Log("StopFindMatch");
 	}
 
 	/// <summary>
@@ -229,7 +249,7 @@ public class NetworkGameManager : NetworkManager
 		List<int> dest = new List<int>();
 		for (int i = 0; i < matches.Count; i++)
 		{
-			if (matches[i].currentSize > 0)
+			if (matches[i].currentSize > 0 && !m_IgnoreMatchId.Contains((ulong)matches[i].networkId))
 			{
 				dest.Add(i);
 			}
@@ -259,7 +279,6 @@ public class NetworkGameManager : NetworkManager
 
 			if (matches.Count > index)
 			{
-				Debug.Log("JoinMatch");
 				matchName = matches[index].name;
 				matchSize = (uint)matches[index].maxSize;
 				return matchMaker.JoinMatch(matches[index].networkId, "", "", "", 0, 0, OnMatchJoined);
@@ -275,6 +294,11 @@ public class NetworkGameManager : NetworkManager
 	{
 		base.OnMatchJoined(success, extendedInfo, match);
 		IsJoinedMatch = success;
+
+		if (success)
+			Debug.Log("Match join succeed");
+		else
+			Debug.LogWarning("Match join failed");
 	}
 
 	/// <summary>
@@ -284,6 +308,7 @@ public class NetworkGameManager : NetworkManager
 	{
 		if (IsJoinedMatch && matchMaker != null && matchInfo != null)
 		{
+			AddIgnoreMatchId((ulong)matchInfo.networkId);
 			return matchMaker.DropConnection(matchInfo.networkId, matchInfo.nodeId, 0, OnDropMatch);
 		}
 		return null;
@@ -294,8 +319,17 @@ public class NetworkGameManager : NetworkManager
 	/// </summary>
 	public void OnDropMatch(bool success, string extendedInfo)
 	{
-		ReleasePlayer();
-		IsJoinedMatch = false;
+		if (success)
+		{
+			IsJoinedMatch = false;
+			ReleasePlayer();
+			StopClient();
+		}
+
+		if (success)
+			Debug.Log("Match drop succeed");
+		else
+			Debug.LogWarning("Match drop failed");
 	}
 
 	/// <summary>
@@ -312,6 +346,22 @@ public class NetworkGameManager : NetworkManager
 	public bool IsOffline
 	{
 		get { return !NetworkServer.active && !NetworkClient.active && matchMaker == null; }
+	}
+
+	/// <summary>
+	/// 無効なマッチIDを追加
+	/// </summary>
+	public void AddIgnoreMatchId(ulong id)
+	{
+		m_IgnoreMatchId.Add(id);
+	}
+
+	/// <summary>
+	/// 無効なマッチIDを削除
+	/// </summary>
+	public void ClearIgnoreMatchId()
+	{
+		m_IgnoreMatchId.Clear();
 	}
 
 	#endregion
