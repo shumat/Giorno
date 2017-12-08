@@ -149,7 +149,7 @@ public class MatchingManager : MonoBehaviour
 		{
 			if (nm.StartHost() == null)
 			{
-				StartCoroutine(LocalMatching());
+				StartCoroutine(m_MatchingCoroutine = LocalMatching());
 				yield break;
 			}
 		}
@@ -251,24 +251,12 @@ public class MatchingManager : MonoBehaviour
 		m_IsValidMatchCancel = false;
 
 		// マッチング中止
-		StopCoroutine(m_MatchingCoroutine);
-
-		// ルーム解散
-		if (NetworkGameManager.Instance.IsCreatedMatch)
+		if (m_MatchingCoroutine != null)
 		{
-			yield return NetworkGameManager.Instance.DestroyMatch();
-		}
-		// ルーム退室
-		if (NetworkGameManager.Instance.IsJoinedMatch)
-		{
-			yield return NetworkGameManager.Instance.DropMatch();
+			StopCoroutine(m_MatchingCoroutine);
 		}
 
-		// ローカルマッチ停止
-		NetworkGameManager.Instance.StopLocalMatch();
-
-		// マッチ無効化
-		NetworkGameManager.Instance.DisableMatchMaker();
+		yield return NetworkGameManager.Instance.Disconnect();
 
 		m_Menu.SelectByName("GameMode");
 		m_IsValidMatchCancel = true;

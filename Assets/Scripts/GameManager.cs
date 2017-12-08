@@ -36,9 +36,9 @@ public class GameManager : MonoBehaviour
 	/// </summary>
 	protected void Update()
 	{
-		if (Input.GetKeyDown(KeyCode.Escape))
+		if (Input.GetKeyDown(KeyCode.Escape) && !GameManager.Instance.IsExistsScene("Matching"))
 		{
-			SceneManager.LoadScene("Game", LoadSceneMode.Single);
+			NetworkGameManager.Instance.Disconnect();
 		}
 	}
 
@@ -171,6 +171,21 @@ public class GameManager : MonoBehaviour
 	private IEnumerator UnloadSceneProcess(string sceneName)
 	{
 		yield return SceneManager.UnloadSceneAsync(sceneName);
+	}
+
+	/// <summary>
+	/// シーンが読み込まれているか
+	/// </summary>
+	public bool IsExistsScene(string sceneName)
+	{
+		for (int i = 0; i < SceneManager.sceneCount; i++)
+		{
+			if (SceneManager.GetSceneAt(i).name == sceneName)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	#endregion

@@ -135,23 +135,6 @@ public class NetworkGameManager : NetworkManager
 	private List<ulong> m_IgnoreMatchId = new List<ulong>();
 
 	/// <summary>
-	/// ローカルマッチ停止
-	/// </summary>
-	public void StopLocalMatch()
-	{
-		if (NetworkServer.active && NetworkClient.active)
-		{
-			StopHost();
-		}
-		if (!NetworkServer.active && NetworkClient.active)
-		{
-			StopClient();
-		}
-
-		ReleasePlayer();
-	}
-
-	/// <summary>
 	/// マッチングメーカー無効化
 	/// </summary>
 	public void DisableMatchMaker()
@@ -306,7 +289,7 @@ public class NetworkGameManager : NetworkManager
 	/// </summary>
 	public Coroutine DropMatch()
 	{
-		if (IsJoinedMatch && matchMaker != null && matchInfo != null)
+		if (IsJoinedMatch && matchInfo != null)
 		{
 			AddIgnoreMatchId((ulong)matchInfo.networkId);
 			return matchMaker.DropConnection(matchInfo.networkId, matchInfo.nodeId, 0, OnDropMatch);
@@ -365,19 +348,135 @@ public class NetworkGameManager : NetworkManager
 	}
 
 	#endregion
+	
+	#region Connect
 
-	private void OnGUI()
+	/// <summary>
+	/// 切断通知
+	/// </summary>
+	public void OnDisconnected()
 	{
-		GUIStyle style = new GUIStyle();
-		GUIStyleState styleState = new GUIStyleState();
-		styleState.textColor = Color.white;
-		style.fontSize = 50;
-		style.normal = styleState;
-
-		string log = "";
-		log += "PlayerCount: " + PlayerCount.ToString() + "\n";
-		GUI.Label(new Rect(0, 0, Screen.width, Screen.height), log, style);
+		// マッチング以外での切断
+		if (!GameManager.Instance.IsExistsScene("Matching"))
+		{
+			UnityEngine.SceneManagement.SceneManager.LoadScene("Game");
+		}
 	}
+
+	/// <summary>
+	/// 切断
+	/// </summary>
+	public Coroutine Disconnect()
+	{
+		return StartCoroutine(Disconnecting());
+	}
+
+	/// <summary>
+	/// 切断
+	/// </summary>
+	private IEnumerator Disconnecting()
+	{
+		// ルーム解散
+		if (IsCreatedMatch)
+		{
+			yield return DestroyMatch();
+		}
+		// ルーム退室
+		if (IsJoinedMatch)
+		{
+			yield return DropMatch();
+		}
+		
+		// サーバー停止
+		if (NetworkServer.active)
+		{
+			StopHost();
+		}
+		// クライアント停止
+		if (NetworkClient.active)
+		{
+			StopClient();
+		}
+
+		// マッチ無効化
+		DisableMatchMaker();
+
+		// プレイヤー破棄
+		ReleasePlayer();
+
+		OnDisconnected();
+	}
+
+	/// <summary>
+	/// サーバーへの接続通知 (Client)
+	/// </summary>
+	public override void OnClientConnect(NetworkConnection conn)
+	{
+		Debug.Log("[Client] Connect");
+		base.OnClientConnect(conn);
+	}
+
+	/// <summary>
+	/// サーバーの切断通知 (Client)
+	/// </summary>
+	public override void OnClientDisconnect(NetworkConnection conn)
+	{
+		Debug.Log("[Client] Disconnect");
+		base.OnClientDisconnect(conn);
+
+		IsJoinedMatch = false;
+
+		// クライアント停止
+		StopClient();
+
+		// マッチ無効化
+		DisableMatchMaker();
+
+		// プレイヤー破棄
+		ReleasePlayer();
+
+		OnDisconnected();
+	}
+
+	/// <summary>
+	/// ネットワークエラー通知 (Client)
+	/// </summary>
+	public override void OnClientError(NetworkConnection conn, int errorCode)
+	{
+		Debug.Log("[Client] Network error");
+		base.OnClientError(conn, errorCode);
+	}
+
+	/// <summary>
+	/// クライアントの接続通知 (Server)
+	/// </summary>
+	public override void OnServerConnect(NetworkConnection conn)
+	{
+		Debug.Log("[Server] Connect");
+		base.OnServerConnect(conn);
+	}
+	
+	/// <summary>
+	/// クライアントの切断通知 (Server)
+	/// </summary>
+	public override void OnServerDisconnect(NetworkConnection conn)
+	{
+		Debug.Log("[Server] Disconnect");
+		base.OnServerDisconnect(conn);
+
+		Disconnect();
+	}
+
+	/// <summary>
+	/// ネットワークエラー通知 (Server)
+	/// </summary>
+	public override void OnServerError(NetworkConnection conn, int errorCode)
+	{
+		Debug.Log("[Server] Network error");
+		base.OnServerError(conn, errorCode);
+	}
+
+	#endregion
 
 	/// <summary>
 	/// インスタンス

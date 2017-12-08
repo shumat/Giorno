@@ -14,6 +14,6 @@ public class DebugDisplay : MonoBehaviour
 
 	private void Update()
 	{
-		m_FrameRate.text = "fps: " + (1f / Time.deltaTime).ToString();
+		m_FrameRate.text = "fps: " + (1f / Time.deltaTime).ToString("0.00");
 	}
 }
