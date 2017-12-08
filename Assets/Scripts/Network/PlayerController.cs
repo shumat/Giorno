@@ -68,6 +68,19 @@ public class PlayerController : NetworkBehaviour
 		get { return m_GameMode; }
 	}
 
+	/// <summary> ボット  </summary>
+	[SyncVar]
+	private bool m_IsBot = false;
+
+	/// <summary>
+	/// ボット
+	/// </summary>
+	public bool IsBot
+	{
+		get { return m_IsBot; }
+		set { m_IsBot = value; }
+	}
+
 	/// <summary>
 	/// 開始
 	/// </summary>

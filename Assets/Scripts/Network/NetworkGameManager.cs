@@ -75,6 +75,40 @@ public class NetworkGameManager : NetworkManager
 	}
 
 	/// <summary>
+	/// ボット生成
+	/// </summary>
+	public PlayerController SpawnBot()
+	{
+		if (NetworkServer.active)
+		{
+			PlayerController bot = Instantiate(playerPrefab).GetComponent<PlayerController>();
+			bot.IsBot = true;
+			NetworkServer.Spawn(bot.gameObject);
+			return bot;
+		}
+		else
+		{
+			return null;
+		}
+	}
+
+	/// <summary>
+	/// ボット取得
+	/// </summary>
+	public PlayerController[] GetBots()
+	{
+		List<PlayerController> bots = new List<PlayerController>();
+		foreach (var player in m_Players)
+		{
+			if (player.IsBot)
+			{
+				bots.Add(player);
+			}
+		}
+		return bots.ToArray();
+	}
+
+	/// <summary>
 	/// 更新
 	/// </summary>
 	protected void LateUpdate()

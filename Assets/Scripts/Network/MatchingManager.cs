@@ -183,10 +183,24 @@ public class MatchingManager : MonoBehaviour
 	{
 		Debug.Log("Start game(" + (online ? "Online" : "Offline") + ")");
 
-		// オフライン対応のためPlayerのSpawnを待つ
-		while (NetworkGameManager.Instance.LocalPlayer == null)
+		// オフライン
+		if (!online)
 		{
-			yield return null;
+			// PlayerのSpawnを待つ
+			while (NetworkGameManager.Instance.LocalPlayer == null)
+			{
+				yield return null;
+			}
+			//// ボットを生成
+			//for (int i = NetworkGameManager.Instance.PlayerCount; i < NetworkGameManager.Instance.matchSize; i++)
+			//{
+			//	PlayerController bot = NetworkGameManager.Instance.SpawnBot();
+			//}
+			//// メンバーが揃うまで待機
+			//while (NetworkGameManager.Instance.PlayerCount < NetworkGameManager.Instance.matchSize)
+			//{
+			//	yield return null;
+			//}
 		}
 
 		// マッチ成功イベント
