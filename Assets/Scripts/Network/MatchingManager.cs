@@ -9,9 +9,6 @@ public class MatchingManager : MonoBehaviour
 	/// <summary> LANを使用 </summary>
 	private bool m_UseLocalNetwork = false;
 
-	/// <summary> デフォルトポート番号 </summary>
-	private int m_DefaultNetworkPort = 0;
-
 	/// <summary> ルーム検索時間 </summary>
 	private float m_RoomFindTime = 2f;
 
@@ -34,14 +31,6 @@ public class MatchingManager : MonoBehaviour
 	{
 		m_Menu = GameObject.Find("MatchingCanvas").transform.Find("Menu").GetComponent<ObjectSelector>();
 		m_UseLocalNetwork = m_Menu.transform.Find("GameMode/UseLan").GetComponent<Toggle>().isOn;
-	}
-
-	/// <summary>
-	/// 開始
-	/// </summary>
-	protected void Start()
-	{
-		m_DefaultNetworkPort = NetworkGameManager.Instance.networkPort;
 	}
 
 	#region Match
@@ -129,7 +118,7 @@ public class MatchingManager : MonoBehaviour
 
 		NetworkGameManager nm = NetworkGameManager.Instance;
 
-		nm.networkPort = m_DefaultNetworkPort;
+		nm.networkPort = nm.DefaultNetworkPort;
 
 		// クライアントとして開始
 		nm.StartClient();

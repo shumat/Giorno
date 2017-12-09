@@ -6,6 +6,11 @@ using UnityEngine.Networking.Match;
 
 public class NetworkGameManager : NetworkManager
 {
+	protected void Start()
+	{
+		DefaultNetworkPort = networkPort;
+	}
+
 	#region Player
 
 	/// <summary> プレイヤー </summary>
@@ -158,6 +163,9 @@ public class NetworkGameManager : NetworkManager
 	#endregion
 
 	#region Matching
+
+	/// <summary> デフォルトポート番号 </summary>
+	public int DefaultNetworkPort { get; private set; }
 
 	/// <summary> ルーム作成した? </summary>
 	public bool IsCreatedMatch { get; private set; }
