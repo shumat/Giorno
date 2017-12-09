@@ -65,8 +65,6 @@ public class MDPlayArea : MonoBehaviour
 	/// </summary>
 	protected void Awake()
 	{
-		m_BlockParent = transform.Find("Blocks").gameObject;
-		m_BlockParentDefaultY = m_BlockParent.transform.position.y;
 	}
 
 	/// <summary>
@@ -75,6 +73,9 @@ public class MDPlayArea : MonoBehaviour
 	public void Initialize(MDGame game)
 	{
 		Game = game;
+
+		m_BlockParent = transform.Find("Blocks").gameObject;
+		m_BlockParentDefaultY = m_BlockParent.transform.position.y;
 
 		Height = MDGame.Config.PlayAreaHeight;
 		Width = MDGame.Config.PlayAreaWidth;
@@ -199,7 +200,8 @@ public class MDPlayArea : MonoBehaviour
 		// ラインが全て表示される位置まで移動
 		if (m_Lines[m_Lines.Count - 1][0].Position.y > m_BlockParentDefaultY - BlockHalfSize)
 		{
-			m_BlockParent.transform.position += Vector3.down * Time.deltaTime * MDGame.Config.PlayAreaScrollSpeed;
+			float scroll = Mathf.Min(Time.deltaTime * MDGame.Config.PlayAreaScrollSpeed, Mathf.Abs(m_Lines[m_Lines.Count - 1][0].Position.y - (m_BlockParentDefaultY - BlockHalfSize)));
+			m_BlockParent.transform.position += Vector3.down * scroll;
 
 			// 座標ループ
 			float blocksY = m_BlockParent.transform.localPosition.y - m_BlockParentDefaultY;
@@ -258,7 +260,7 @@ public class MDPlayArea : MonoBehaviour
 			else
 			{
 				drop = Instantiate(DropTemplate, transform).GetComponent<MDDrop>();
-				drop.transform.SetParent(m_BlockParent.transform);
+				drop.transform.SetParent(m_BlockParent.transform, false);
 				m_Drops.Add(drop);
 			}
 

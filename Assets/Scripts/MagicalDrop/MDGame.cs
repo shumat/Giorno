@@ -37,14 +37,10 @@ public class MDGame : GameBase
 
 		Player = Instantiate(PlayerTemplate).GetComponent<MDPlayer>();
 		PlayArea = Instantiate(PlayAreaTemplate).GetComponent<MDPlayArea>();
+		PlayArea.transform.SetParent(GameObject.Find(Controller.isLocalPlayer ? "PlayArea" : "EnemyPlayArea").transform, false);
 
 		Player.Initialize(this);
 		PlayArea.Initialize(this);
-
-		if (!Controller.isLocalPlayer)
-		{
-			PlayArea.transform.position += Vector3.right * 10f;
-		}
 	}
 
 	/// <summary>

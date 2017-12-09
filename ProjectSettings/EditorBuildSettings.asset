@@ -12,14 +12,8 @@ EditorBuildSettings:
     path: Assets/Scenes/Matching.unity
     guid: b5e1ce1fcef447c4a81c32a1255bd0d7
   - enabled: 1
-    path: Assets/Scenes/MagicalDrop.unity
+    path: Assets/Scenes/Battle.unity
     guid: 9affe482d8a1c624f91adef8ed3e76ed
-  - enabled: 1
-    path: Assets/Scenes/PanelDePon.unity
-    guid: 79630c74e84e2a24a8dbf825543de67b
-  - enabled: 1
-    path: Assets/Scenes/Tetris.unity
-    guid: 93d3302f1dabe004f96c0b21ce76e51d
   - enabled: 1
     path: Assets/Scenes/DebugModeSelect.unity
     guid: 7d2a740cec7794944bc3208899ae70a2

@@ -61,8 +61,6 @@ public class PPPlayArea : MonoBehaviour
 	/// </summary>
 	protected void Awake()
 	{
-		m_BlockParent = transform.Find("Blocks").gameObject;
-		m_BlockParentDefaultY = m_BlockParent.transform.position.y;
 	}
 
 	/// <summary>
@@ -71,6 +69,9 @@ public class PPPlayArea : MonoBehaviour
 	public void Initialize(PPGame game)
 	{
 		Game = game;
+
+		m_BlockParent = transform.Find("Blocks").gameObject;
+		m_BlockParentDefaultY = m_BlockParent.transform.position.y;
 
 		Height = PPGame.Config.PlayAreaHeight;
 		Width = PPGame.Config.PlayAreaWidth;
@@ -444,7 +445,7 @@ public class PPPlayArea : MonoBehaviour
 				else
 				{
 					panel = Instantiate(PanelTemplate).GetComponent<PPPanel>();
-					panel.gameObject.transform.SetParent(m_BlockParent.transform);
+					panel.gameObject.transform.SetParent(m_BlockParent.transform, false);
 					m_Panels.Add(panel);
 				}
 

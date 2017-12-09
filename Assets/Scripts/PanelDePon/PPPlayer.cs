@@ -127,11 +127,6 @@ public class PPPlayer : PlayerBase
 	{
 		PPPlayArea playArea = (Game as PPGame).PlayArea;
 
-		if (!Game.Controller.isLocalPlayer)
-		{
-			Debug.Log(command.type);
-		}
-
 		switch ((PlayerController.CommandType)command.type)
 		{
 			case PlayerController.CommandType.PP_Swap:

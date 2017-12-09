@@ -29,7 +29,7 @@ public class DebugModeSelect : MonoBehaviour
 		}
 
 		GameManager.Instance.RequestUnloadScene("DebugModeSelect");
-		GameManager.Instance.RequestAddScene(gameMode.ToString(), true);
+		GameManager.Instance.RequestAddScene("Battle", true);
 		GameManager.Instance.ApplySceneRequests();
 	}
 

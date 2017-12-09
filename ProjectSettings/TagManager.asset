@@ -44,3 +44,6 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Frame
+    uniqueID: 608369887
+    locked: 0

@@ -261,7 +261,7 @@ public class TRPlayArea : MonoBehaviour
 				else
 				{
 					panel = Instantiate(PanelTemplate).GetComponent<TRPanel>();
-					panel.transform.SetParent(m_BlockParent.transform);
+					panel.transform.SetParent(m_BlockParent.transform, false);
 				}
 
 				panel.Initialize(this, m_Tetromino.PanelColor);

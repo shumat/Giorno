@@ -21,10 +21,10 @@ MonoBehaviour:
   m_ActionStartSwipeDistance: 0.2
   m_LineCreateStartTouchTime: 0.5
   m_LineCreateContinueTouchTime: 0.3
-  m_PlayAreaHeight: 11
+  m_PlayAreaHeight: 12
   m_PlayAreaWidth: 6
   m_PlayAreaScrollSpeed: 5
-  m_DropSize: 1.5
+  m_DropSize: 1.46
   m_DropPullSpeed: 80
   m_DropPullMaxAngle: 45
   m_DropPushSpeed: 60

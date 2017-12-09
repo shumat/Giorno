@@ -11,6 +11,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7a7e48706341b54b881c36734a53a65, type: 3}
   m_Name: TRConfig
   m_EditorClassIdentifier: 
-  m_PlayAreaHeight: 17
-  m_PlayAreaWidth: 8
-  m_GridSize: 1.1
+  m_PlayAreaHeight: 20
+  m_PlayAreaWidth: 10
+  m_GridSize: 0.875

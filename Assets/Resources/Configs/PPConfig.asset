@@ -23,8 +23,9 @@ MonoBehaviour:
   m_PanelSwapDirThresholdScale: 0.8
   m_PlayAreaHeight: 12
   m_PlayAreaWidth: 6
-  m_PanelSize: 1.6
+  m_PanelSize: 1.46
   m_PanelFallWaitTime: 0.15
   m_PanelFallSpeed: 30
   m_PanelSwapSpeed: 30
   m_PanelVanishDelay: 0.2
+  m_PanelDissolveDelay: 0.2
