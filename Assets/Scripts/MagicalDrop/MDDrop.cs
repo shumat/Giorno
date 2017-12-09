@@ -191,14 +191,10 @@ public class MDDrop : MonoBehaviour
 			destroyerValue = Mathf.Min(destroyerValue + Time.deltaTime * 2.5f, 1f);
 			m_SpriteRenderer.material.SetFloat("_Destroyer_Value_1", destroyerValue);
 
-			if (destroyerValue > 0.8f)
-			{
-				m_Area.RemoveDrop(this);
-			}
-
 			yield return null;
 		}
 
+		m_Area.RemoveDrop(this);
 		gameObject.SetActive(false);
 
 		m_State = State.None;
