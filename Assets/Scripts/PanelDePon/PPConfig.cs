@@ -187,7 +187,7 @@ public class PPConfig : ScriptableObject
 	{
 		if (count > 1)
 		{
-			return count - 1 + 4;
+			return count - 1 + 3;
 		}
 		else
 		{

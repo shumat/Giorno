@@ -141,15 +141,12 @@ public class TRPlayer : PlayerBase
 				(Game as TRGame).PlayArea.Hold();
 				break;
 		}
-	}
 
-	/// <summary>
-	/// ダメージ
-	/// </summary>
-	public override void AddDamage(int level)
-	{
-		base.AddDamage(level);
-		(Game as TRGame).PlayArea.RequestAddLine(level);
+		// ダメージ
+		if (command.damageLevel > 0)
+		{
+			(Game as TRGame).PlayArea.RequestAddLine((int)command.damageLevel);
+		}
 	}
 
 	/// <summary>
@@ -157,6 +154,7 @@ public class TRPlayer : PlayerBase
 	/// </summary>
 	public void OnLineVanish(int count)
 	{
+		// 複製プレイヤーのみ
 		if (!Game.Controller.isLocalPlayer)
 		{
 			PlayerController[] players = NetworkGameManager.Instance.GetPlayers();
@@ -164,7 +162,7 @@ public class TRPlayer : PlayerBase
 			{
 				if (player != Game.Controller)
 				{
-					player.Game.Player.AddDamage(count);
+					player.Game.Player.AddDamage((byte)count);
 				}
 			}
 		}
@@ -176,13 +174,5 @@ public class TRPlayer : PlayerBase
 	public void OnCreateTetromino()
 	{
 		m_PossibleMoveTetromino = false;
-	}
-
-	private void OnGUI()
-	{
-		Vector3 pos = m_TetrominoTarget;
-		pos.y = -pos.y;
-		pos = Camera.main.WorldToScreenPoint(pos);
-		GUI.Label(new Rect(pos.x, pos.y, 100, 100), "target");
 	}
 }

@@ -13,12 +13,14 @@ public class PlayerController : NetworkBehaviour
 		public byte type;
 		public int[] values;
 		public uint frame;
+		public byte damageLevel;
 
 		public void Clear()
 		{
 			type = 0;
 			values = null;
 			frame = 0;
+			damageLevel = 0;
 		}
 	}
 
@@ -41,6 +43,25 @@ public class PlayerController : NetworkBehaviour
 		TR_Hold,
 	}
 
+	/// <summary>
+	/// イベント
+	/// </summary>
+	public struct EventData
+	{
+		public EventType type;
+		public int value;
+		public uint frame;
+	}
+
+	/// <summary>
+	/// イベントタイプ
+	/// </summary>
+	public enum EventType
+	{
+		None,
+		Damage,
+	}
+
 	/// <summary> フレーム </summary>
 	public uint FrameCount { get; private set; }
 
@@ -49,6 +70,9 @@ public class PlayerController : NetworkBehaviour
 
 	/// <summary> 予約コマンド </summary>
 	private CommandData m_PendingCommand;
+
+	/// <summary> 適用待ちイベント </summary>
+	private List<EventData> m_EventQueue = new List<EventData>();
 
 	/// <summary> ゲーム </summary>
 	public GameBase Game { get; private set; }

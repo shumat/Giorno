@@ -13,6 +13,9 @@ public class PlayerBase : MonoBehaviour
 	/// <summary> コマンド </summary>
 	private PlayerController.CommandData m_NextCommand;
 
+	/// <summary> 適用待ちダメージ </summary>
+	private List<byte> m_DamageQueue = new List<byte>();
+
 	/// <summary>
 	/// 初期化
 	/// </summary>
@@ -35,6 +38,13 @@ public class PlayerBase : MonoBehaviour
 		else
 		{
 			Play();
+
+			// ダメージを追加
+			if (m_DamageQueue.Count > 0)
+			{
+				m_NextCommand.damageLevel = m_DamageQueue[0];
+				m_DamageQueue.RemoveAt(0);
+			}
 		}
 
 		return m_NextCommand;
@@ -64,7 +74,10 @@ public class PlayerBase : MonoBehaviour
 	public virtual void ExecuteCommand(PlayerController.CommandData command){}
 
 	/// <summary>
-	/// ダメージ
+	/// ダメージイベント
 	/// </summary>
-	public virtual void AddDamage(int level){}
+	public void AddDamage(byte level)
+	{
+		m_DamageQueue.Add(level);
+	}
 }

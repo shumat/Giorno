@@ -446,6 +446,9 @@ public class NetworkGameManager : NetworkManager
 		// プレイヤー破棄
 		ReleasePlayer();
 
+		IsCreatedMatch = false;
+		IsJoinedMatch = false;
+
 		OnDisconnected();
 	}
 

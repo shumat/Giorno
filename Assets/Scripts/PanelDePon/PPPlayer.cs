@@ -41,7 +41,7 @@ public class PPPlayer : PlayerBase
 
 		if (Input.GetKeyDown(KeyCode.D))
 		{
-			AddDamage(1);
+			Game.Player.AddDamage((byte)PPGame.Config.GetChainDamageLevel(2));
 		}
 
 		// タッチした瞬間
@@ -147,16 +147,13 @@ public class PPPlayer : PlayerBase
 				playArea.SkipElevateWait();
 				break;
 		}
-	}
 
-	/// <summary>
-	/// ダメージ
-	/// </summary>
-	public override void AddDamage(int level)
-	{
-		base.AddDamage(level);
-		Vector2i size = PPGame.Config.GetDisturbanceSize(level);
-		(Game as PPGame).PlayArea.CreateDisturbPanel(size.x, size.y);
+		// ダメージ
+		if (command.damageLevel > 0)
+		{
+			Vector2i size = PPGame.Config.GetDisturbanceSize((byte)command.damageLevel);
+			(Game as PPGame).PlayArea.CreateDisturbPanel(size.x, size.y);
+		}
 	}
 
 	/// <summary>
@@ -171,6 +168,7 @@ public class PPPlayer : PlayerBase
 		int level = PPGame.Config.GetChainDamageLevel(chainCount);
 		if (level > 0)
 		{
+			// 複製プレイヤーのみ
 			if (!Game.Controller.isLocalPlayer)
 			{
 				PlayerController[] players = NetworkGameManager.Instance.GetPlayers();
@@ -178,7 +176,7 @@ public class PPPlayer : PlayerBase
 				{
 					if (player != Game.Controller)
 					{
-						player.Game.Player.AddDamage(PPGame.Config.GetChainDamageLevel(chainCount));
+						player.Game.Player.AddDamage((byte)PPGame.Config.GetChainDamageLevel(chainCount));
 					}
 				}
 			}

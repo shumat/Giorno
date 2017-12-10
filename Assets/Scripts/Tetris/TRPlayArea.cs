@@ -735,39 +735,42 @@ public class TRPlayArea : MonoBehaviour
 
 	private void OnGUI()
 	{
-		GUIStyle style = new GUIStyle();
-		GUIStyleState styleState = new GUIStyleState();
-		styleState.textColor = Color.white;
-		style.fontSize = 50;
-		style.normal = styleState;
-
-		string next = "";
-		if (m_NextTetrominoTypes.Count > 0)
+		if (m_Game.Controller.isLocalPlayer)
 		{
-			switch (m_NextTetrominoTypes[0])
-			{
-				case 0: next = "S"; break;
-				case 1: next = "Z"; break;
-				case 2: next = "T"; break;
-				case 3: next = "L"; break;
-				case 4: next = "J"; break;
-				case 5: next = "I"; break;
-				case 6: next = "O"; break;
-			}
-		}
-		GUI.Label(new Rect(0, 0, Screen.width, Screen.height), next, style);
+			GUIStyle style = new GUIStyle();
+			GUIStyleState styleState = new GUIStyleState();
+			styleState.textColor = Color.white;
+			style.fontSize = 50;
+			style.normal = styleState;
 
-		/*
-		for (int y = 0; y < m_Lines.Count; y++)
-		{
-			for (int x = 0; x < m_Lines[y].Length; x++)
+			string next = "";
+			if (m_NextTetrominoTypes.Count > 0)
 			{
-				Vector3 pos = m_Lines[y][x].Position;
-				pos.y = -pos.y;
-				pos = Camera.main.WorldToScreenPoint(pos);
-				GUI.Label(new Rect(pos.x, pos.y, 100, 100), m_Lines[y][x].AttachedPanel != null ? "full" : "empty");
+				switch (m_NextTetrominoTypes[0])
+				{
+					case 0: next = "S"; break;
+					case 1: next = "Z"; break;
+					case 2: next = "T"; break;
+					case 3: next = "L"; break;
+					case 4: next = "J"; break;
+					case 5: next = "I"; break;
+					case 6: next = "O"; break;
+				}
 			}
+			GUI.Label(new Rect(0, 0, Screen.width, Screen.height), next, style);
+
+			/*
+			for (int y = 0; y < m_Lines.Count; y++)
+			{
+				for (int x = 0; x < m_Lines[y].Length; x++)
+				{
+					Vector3 pos = m_Lines[y][x].Position;
+					pos.y = -pos.y;
+					pos = Camera.main.WorldToScreenPoint(pos);
+					GUI.Label(new Rect(pos.x, pos.y, 100, 100), m_Lines[y][x].AttachedPanel != null ? "full" : "empty");
+				}
+			}
+			*/
 		}
-		*/
 	}
 }

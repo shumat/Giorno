@@ -176,24 +176,14 @@ public class MDPlayer : PlayerBase
 				(Game as MDGame).PlayArea.AddNewLine();
 				break;
 		}
-	}
 
-	/// <summary>
-	/// ポーズ中
-	/// </summary>
-	public override void OnPause()
-	{
-	}
-
-	/// <summary>
-	/// ダメージ
-	/// </summary>
-	public override void AddDamage(int level)
-	{
-		base.AddDamage(level);
-		for (int i = 0; i < level; i++)
+		// ダメージ
+		if (command.damageLevel > 0)
 		{
-			(Game as MDGame).PlayArea.AddNewLine();
+			for (int i = 0; i < command.damageLevel; i++)
+			{
+				(Game as MDGame).PlayArea.AddNewLine();
+			}
 		}
 	}
 
@@ -208,6 +198,7 @@ public class MDPlayer : PlayerBase
 		//}
 		if (chainCount > 0)
 		{
+			// 複製プレイヤーのみ
 			if (!Game.Controller.isLocalPlayer)
 			{
 				PlayerController[] players = NetworkGameManager.Instance.GetPlayers();
@@ -215,7 +206,7 @@ public class MDPlayer : PlayerBase
 				{
 					if (player != Game.Controller)
 					{
-						player.Game.Player.AddDamage(chainCount - 1);
+						player.Game.Player.AddDamage((byte)(chainCount - 1));
 					}
 				}
 			}
