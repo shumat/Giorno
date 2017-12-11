@@ -98,7 +98,7 @@ public class TRPlayArea : MonoBehaviour
 	/// <summary>
 	/// 更新
 	/// </summary>
-	public void Process()
+	public void Step()
 	{
 		// ラインを下げる
 		DownLine();
@@ -107,7 +107,7 @@ public class TRPlayArea : MonoBehaviour
 		bool tetrominoAttached = false;
 		if (!IsTetrominoFlying())
 		{
-			m_TetrominoAttachWaitTime -= Time.deltaTime;
+			m_TetrominoAttachWaitTime -= GameManager.TimeStep;
 			if (m_TetrominoAttachWaitTime < 0)
 			{
 				AttachTetromino();
@@ -475,7 +475,7 @@ public class TRPlayArea : MonoBehaviour
 	/// </summary>
 	public void DownLine()
 	{
-		m_MoveDownWaitTime -= Time.deltaTime;
+		m_MoveDownWaitTime -= GameManager.TimeStep;
 		if (m_MoveDownWaitTime < 0)
 		{
 			ResetDownLineWait();

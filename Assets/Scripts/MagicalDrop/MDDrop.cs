@@ -178,7 +178,7 @@ public class MDDrop : MonoBehaviour
 		float brightness = 0;
 		while (brightness < 1)
 		{
-			brightness = Mathf.Min(brightness + Time.deltaTime * 4f, 1f);
+			brightness = Mathf.Min(brightness + GameManager.TimeStep * 4f, 1f);
 			m_SpriteRenderer.material.SetFloat("_Brightness_Fade_1", brightness);
 			yield return null;
 		}
@@ -188,7 +188,7 @@ public class MDDrop : MonoBehaviour
 		float destroyerValue = 0;
 		while (destroyerValue < 1)
 		{
-			destroyerValue = Mathf.Min(destroyerValue + Time.deltaTime * 2.5f, 1f);
+			destroyerValue = Mathf.Min(destroyerValue + GameManager.TimeStep * 2.5f, 1f);
 			m_SpriteRenderer.material.SetFloat("_Destroyer_Value_1", destroyerValue);
 
 			yield return null;
@@ -234,7 +234,7 @@ public class MDDrop : MonoBehaviour
 
 		while (true)
 		{
-			float moveDelta = Time.deltaTime * MDGame.Config.DropPullSpeed;
+			float moveDelta = GameManager.TimeStep * MDGame.Config.DropPullSpeed;
 			if (Vector3.Distance(player.transform.position, transform.position) > moveDelta)
 			{
 				// プレイヤーへのベクトル
@@ -291,7 +291,7 @@ public class MDDrop : MonoBehaviour
 
 		while (true)
 		{
-			transform.localPosition += Vector3.up * Time.deltaTime * MDGame.Config.DropPushSpeed;
+			transform.localPosition += Vector3.up * GameManager.TimeStep * MDGame.Config.DropPushSpeed;
 
 			// 通過してたら座標を戻す
 			if (transform.localPosition.y > Block.LocalPosition.y)
@@ -337,7 +337,7 @@ public class MDDrop : MonoBehaviour
 		float brightness = 0;
 		while (brightness < 1)
 		{
-			brightness = Mathf.Min(brightness + Time.deltaTime * 4f, 1f);
+			brightness = Mathf.Min(brightness + GameManager.TimeStep * 4f, 1f);
 			m_SpriteRenderer.material.SetFloat("_Brightness_Fade_1", brightness);
 			yield return null;
 		}
@@ -348,7 +348,7 @@ public class MDDrop : MonoBehaviour
 
 		while (brightness > 0)
 		{
-			brightness = Mathf.Max(brightness - Time.deltaTime * 4f, 0);
+			brightness = Mathf.Max(brightness - GameManager.TimeStep * 4f, 0);
 			m_SpriteRenderer.material.SetFloat("_Brightness_Fade_1", brightness);
 			yield return null;
 		}

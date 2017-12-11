@@ -53,8 +53,8 @@ public class TRGame : GameBase
 	/// <summary>
 	/// 更新
 	/// </summary>
-	public override void Process()
+	public override void Step()
 	{
-		PlayArea.Process();
+		PlayArea.Step();
 	}
 }

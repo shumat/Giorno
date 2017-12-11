@@ -93,7 +93,7 @@ public class PPPlayArea : MonoBehaviour
 	/// <summary>
 	/// 更新
 	/// </summary>
-	public void Process()
+	public void Step()
 	{
 		// せり上げスピード登録
 		ElevateValue = PPGame.Config.AutoElevateValue;
@@ -336,14 +336,14 @@ public class PPPlayArea : MonoBehaviour
 	private void Elevate()
 	{
 		// せり上げ停止中
-		m_ElevateStopTime -= Time.deltaTime;
+		m_ElevateStopTime -= GameManager.TimeStep;
 		if (m_ElevateStopTime > 0f)
 		{
 			return;
 		}
 
 		// 毎フレーム上げると気持ち悪いのでカクつかせる
-		m_ElevateWaitTime -= Time.deltaTime;
+		m_ElevateWaitTime -= GameManager.TimeStep;
 		if (m_ElevateWaitTime > 0f)
 		{
 			return;

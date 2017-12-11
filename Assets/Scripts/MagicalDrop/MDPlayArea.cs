@@ -128,7 +128,7 @@ public class MDPlayArea : MonoBehaviour
 	/// <summary>
 	/// 更新
 	/// </summary>
-	public void Process()
+	public void Step()
 	{
 		if (!m_EnableUpdate)
 		{
@@ -136,7 +136,7 @@ public class MDPlayArea : MonoBehaviour
 		}
 
 		// 連鎖受付時間更新
-		ChainReceiveTime -= Time.deltaTime;
+		ChainReceiveTime -= GameManager.TimeStep;
 
 		// ライン更新
 		UpdateLine();
@@ -150,7 +150,7 @@ public class MDPlayArea : MonoBehaviour
 		// 背景ライン更新
 		for (int i = 0; i < m_BackLines.Count; i++)
 		{
-			m_BackLines[i].color = m_BackLines[i].color + (m_BackLineDefaultColors[i] - m_BackLines[i].color) * Time.deltaTime * 5f;
+			m_BackLines[i].color = m_BackLines[i].color + (m_BackLineDefaultColors[i] - m_BackLines[i].color) * GameManager.TimeStep * 5f;
 		}
 
 		// ゲームオーバー
@@ -187,7 +187,7 @@ public class MDPlayArea : MonoBehaviour
 	private void UpdateLine()
 	{
 		// ライン自動生成
-		m_AutoLineCreateWaitTime -= Time.deltaTime;
+		m_AutoLineCreateWaitTime -= GameManager.TimeStep;
 		if (m_AutoLineCreateWaitTime <= 0)
 		{
 			for (int i = 0; i < MDGame.Config.GetAutoLineCreateCount(0); i++)
@@ -200,7 +200,7 @@ public class MDPlayArea : MonoBehaviour
 		// ラインが全て表示される位置まで移動
 		if (m_Lines[m_Lines.Count - 1][0].Position.y > m_BlockParentDefaultY - BlockHalfSize)
 		{
-			float scroll = Mathf.Min(Time.deltaTime * MDGame.Config.PlayAreaScrollSpeed, Mathf.Abs(m_Lines[m_Lines.Count - 1][0].Position.y - (m_BlockParentDefaultY - BlockHalfSize)));
+			float scroll = Mathf.Min(GameManager.TimeStep * MDGame.Config.PlayAreaScrollSpeed, Mathf.Abs(m_Lines[m_Lines.Count - 1][0].Position.y - (m_BlockParentDefaultY - BlockHalfSize)));
 			m_BlockParent.transform.position += Vector3.down * scroll;
 
 			// 座標ループ

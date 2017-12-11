@@ -25,6 +25,6 @@ MonoBehaviour:
   m_PlayAreaWidth: 6
   m_PlayAreaScrollSpeed: 5
   m_DropSize: 1.46
-  m_DropPullSpeed: 80
+  m_DropPullSpeed: 100
   m_DropPullMaxAngle: 45
-  m_DropPushSpeed: 60
+  m_DropPushSpeed: 80

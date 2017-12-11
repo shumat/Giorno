@@ -27,7 +27,7 @@ public class PlayerBase : MonoBehaviour
 	/// <summary>
 	/// 更新
 	/// </summary>
-	public virtual PlayerController.CommandData Process()
+	public virtual PlayerController.CommandData Step()
 	{
 		m_NextCommand.Clear();
 

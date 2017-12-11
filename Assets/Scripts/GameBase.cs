@@ -33,10 +33,10 @@ public class GameBase : MonoBehaviour
 	/// <summary>
 	/// 更新
 	/// </summary>
-	public virtual void Process(){}
+	public virtual void Step(){}
 
 	/// <summary>
 	/// フレーム終了時の更新
 	/// </summary>
-	public virtual void LateProcess(){}
+	public virtual void LateStep(){}
 }

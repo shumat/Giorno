@@ -11,11 +11,16 @@ public class GameManager : MonoBehaviour
 	/// <summary> プレイヤーキャラクターID </summary>
 	public int PlayerCharacterId { get; set; }
 
+	/// <summary> タイムステップ </summary>
+	public static float TimeStep { get { return 1f / Application.targetFrameRate; } }
+
 	/// <summary>
 	/// 生成
 	/// </summary>
 	protected void Awake()
 	{
+		Application.targetFrameRate = 60;
+
 		if (m_Instance != null)
 		{
 			Destroy(m_Instance);

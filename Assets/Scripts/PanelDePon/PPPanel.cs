@@ -202,7 +202,7 @@ public class PPPanel : MonoBehaviour
 		while (true)
 		{
 			Vector3 dir = target.Position - transform.position;
-			Vector3 move = dir.normalized * Time.deltaTime * PPGame.Config.PanelSwapSpeed;
+			Vector3 move = dir.normalized * GameManager.TimeStep * PPGame.Config.PanelSwapSpeed;
 			transform.position += move;
 
 			if (dir.magnitude - move.magnitude < 0)
@@ -245,7 +245,7 @@ public class PPPanel : MonoBehaviour
 		float waitTime = PPGame.Config.PanelFallWaitTime;
 		while (waitTime >= 0f)
 		{
-			waitTime -= Time.deltaTime;
+			waitTime -= GameManager.TimeStep;
 			yield return null;
 		}
 
@@ -327,7 +327,7 @@ public class PPPanel : MonoBehaviour
 			distance = Mathf.Abs(fallTarget.Position.y - transform.position.y);
 
 			// 移動
-			Vector3 move = -Vector3.up * Time.deltaTime * PPGame.Config.PanelFallSpeed;
+			Vector3 move = -Vector3.up * GameManager.TimeStep * PPGame.Config.PanelFallSpeed;
 			transform.position += move;
 			distance -= move.magnitude;
 
@@ -407,7 +407,7 @@ public class PPPanel : MonoBehaviour
 		int count = 0;
 		while (time < 0.5f)
 		{
-			time += Time.deltaTime;
+			time += GameManager.TimeStep;
 			++count;
 			m_SpriteRenderer.color = count % 16 < 8 ? Color.gray : Color.white;
 			yield return null;
@@ -418,7 +418,7 @@ public class PPPanel : MonoBehaviour
 		float wait = delay;
 		while (wait > 0)
 		{
-			wait -= Time.deltaTime;
+			wait -= GameManager.TimeStep;
 			yield return null;
 		}
 
@@ -427,7 +427,7 @@ public class PPPanel : MonoBehaviour
 		wait = endTime - delay + wait;
 		while (wait > 0)
 		{
-			wait -= Time.deltaTime;
+			wait -= GameManager.TimeStep;
 			yield return null;
 		}
 
@@ -561,7 +561,7 @@ public class PPPanel : MonoBehaviour
 		int count = 0;
 		while (time < 0.5f)
 		{
-			time += Time.deltaTime;
+			time += GameManager.TimeStep;
 			++count;
 			m_SpriteRenderer.color = count % 16 < 8 ? Color.gray : Color.white;
 			yield return null;
@@ -573,7 +573,7 @@ public class PPPanel : MonoBehaviour
 		float wait = delay;
 		while (wait > 0)
 		{
-			wait -= Time.deltaTime;
+			wait -= GameManager.TimeStep;
 			yield return null;
 		}
 
@@ -590,7 +590,7 @@ public class PPPanel : MonoBehaviour
 		wait = endTime - delay + wait;
 		while (wait > 0)
 		{
-			wait -= Time.deltaTime;
+			wait -= GameManager.TimeStep;
 			yield return null;
 		}
 

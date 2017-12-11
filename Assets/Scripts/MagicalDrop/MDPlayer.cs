@@ -79,7 +79,7 @@ public class MDPlayer : PlayerBase
 			UpdatePosition();
 
 			// ライン作成
-			m_LineCreateWaitTime -= Time.deltaTime;
+			m_LineCreateWaitTime -= GameManager.TimeStep;
 			if (InputManager.IsTouchDouble() && m_LineCreateWaitTime <= 0f)
 			{
 				m_LineCreateWaitTime = MDGame.Config.LineCreateContinueTouchTime;

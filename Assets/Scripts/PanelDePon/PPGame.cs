@@ -46,19 +46,19 @@ public class PPGame : GameBase
 	/// <summary>
 	/// 更新
 	/// </summary>
-	public override void Process()
+	public override void Step()
 	{		
 		// コルーチン再生
 		PlayArea.StartPlayingCoroutine();
 
 		// エリア更新
-		PlayArea.Process();
+		PlayArea.Step();
 	}
 
 	/// <summary>
 	/// フレーム終了時の更新
 	/// </summary>
-	public override void LateProcess()
+	public override void LateStep()
 	{
 		// コルーチン停止
 		PlayArea.StopPlayingCoroutine();
