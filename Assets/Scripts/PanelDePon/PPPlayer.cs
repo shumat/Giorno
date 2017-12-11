@@ -171,14 +171,8 @@ public class PPPlayer : PlayerBase
 			// 複製プレイヤーのみ
 			if (!Game.Controller.isLocalPlayer)
 			{
-				PlayerController[] players = NetworkGameManager.Instance.GetPlayers();
-				foreach (PlayerController player in players)
-				{
-					if (player != Game.Controller)
-					{
-						player.Game.Player.AddDamage((byte)PPGame.Config.GetChainDamageLevel(chainCount));
-					}
-				}
+				// ローカルプレイヤーにダメージ
+				NetworkGameManager.Instance.LocalPlayer.Game.Player.AddDamage((byte)PPGame.Config.GetChainDamageLevel(chainCount));
 			}
 		}
 	}

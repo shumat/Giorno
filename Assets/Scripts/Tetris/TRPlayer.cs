@@ -157,14 +157,8 @@ public class TRPlayer : PlayerBase
 		// 複製プレイヤーのみ
 		if (!Game.Controller.isLocalPlayer)
 		{
-			PlayerController[] players = NetworkGameManager.Instance.GetPlayers();
-			foreach (PlayerController player in players)
-			{
-				if (player != Game.Controller)
-				{
-					player.Game.Player.AddDamage((byte)count);
-				}
-			}
+			// ローカルプレイヤーにダメージ
+			NetworkGameManager.Instance.LocalPlayer.Game.Player.AddDamage((byte)count);
 		}
 	}
 
