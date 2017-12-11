@@ -131,7 +131,7 @@ public class NetworkGameManager : NetworkManager
 		{
 			foreach (PlayerController player in m_Players)
 			{
-				player.RemoveCommand((ulong)(minFrame.Value - 1));
+				player.RemoveCommand(minFrame.Value - 1);
 			}
 		}
 	}
