@@ -214,6 +214,9 @@ public class PPPlayArea : MonoBehaviour
 				}
 			}
 		}
+
+		// パネル消滅イベント
+		(Game.Player as PPPlayer).OnVanishPanel(blocks.Count);
 	}
 
 	/// <summary>

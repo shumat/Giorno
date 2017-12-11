@@ -165,14 +165,27 @@ public class PPPlayer : PlayerBase
 		//{
 		//	StartCoroutine(ChainAppeal(chainCount));
 		//}
-		int level = PPGame.Config.GetChainDamageLevel(chainCount);
-		if (level > 0)
+		// 複製プレイヤーのみ
+		if (!Game.Controller.isLocalPlayer)
 		{
-			// 複製プレイヤーのみ
-			if (!Game.Controller.isLocalPlayer)
+			// ローカルプレイヤーにダメージ
+			NetworkGameManager.Instance.LocalPlayer.Game.Player.AddDamage((byte)PPGame.Config.GetChainDamageLevel(chainCount));
+		}
+	}
+
+	/// <summary>
+	/// パネル消滅イベント
+	/// </summary>
+	public void OnVanishPanel(int count)
+	{
+		// 複製プレイヤーのみ
+		if (!Game.Controller.isLocalPlayer)
+		{
+			// ローカルプレイヤーにダメージ
+			int[] levels = PPGame.Config.GetConcurrentDamageLevels(count);
+			for (int i = 0; i < levels.Length; i++)
 			{
-				// ローカルプレイヤーにダメージ
-				NetworkGameManager.Instance.LocalPlayer.Game.Player.AddDamage((byte)PPGame.Config.GetChainDamageLevel(chainCount));
+				NetworkGameManager.Instance.LocalPlayer.Game.Player.AddDamage((byte)(levels[i]));
 			}
 		}
 	}

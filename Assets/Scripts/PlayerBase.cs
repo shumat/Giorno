@@ -78,6 +78,9 @@ public class PlayerBase : MonoBehaviour
 	/// </summary>
 	public void AddDamage(byte level)
 	{
-		m_DamageQueue.Add(level);
+		if (level > 0)
+		{
+			m_DamageQueue.Add(level);
+		}
 	}
 }
