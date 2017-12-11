@@ -11,8 +11,8 @@ public class PlayerController : NetworkBehaviour
 	public struct CommandData
 	{
 		public byte type;
-		public int[] values;
-		public uint frame;
+		public sbyte[] values;
+		public byte frame;
 		public byte damageLevel;
 
 		public void Clear()
@@ -63,16 +63,16 @@ public class PlayerController : NetworkBehaviour
 	}
 
 	/// <summary> フレーム </summary>
-	public uint FrameCount { get; private set; }
+	public byte FrameCount { get; private set; }
+
+	/// <summary> 合計フレーム </summary>
+	public ulong TotalFrameCount { get; private set; }
 
 	/// <summary> コマンドリスト </summary>
 	private List<CommandData> m_Commands = new List<CommandData>();
 
-	/// <summary> 予約コマンド </summary>
-	private CommandData m_PendingCommand;
-
-	/// <summary> 適用待ちイベント </summary>
-	private List<EventData> m_EventQueue = new List<EventData>();
+	/// <summary> コマンドのフレームをリセットした回数 </summary>
+	private uint m_CommandFrameResetCount = 0;
 
 	/// <summary> ゲーム </summary>
 	public GameBase Game { get; private set; }
@@ -155,6 +155,7 @@ public class PlayerController : NetworkBehaviour
 			Game.LateStep();
 
 			++FrameCount;
+			++TotalFrameCount;
 		}
 		// 相手側の更新(同期待ちする)
 		else
@@ -166,10 +167,13 @@ public class PlayerController : NetworkBehaviour
 				Game.Step();
 
 				// コマンド実行
-				ExecuteCommand(FrameCount++);
+				ExecuteCommand(FrameCount);
 
 				// ゲーム更新
 				Game.LateStep();
+
+				++FrameCount;
+				++TotalFrameCount;
 			}
 		}
 	}
@@ -177,22 +181,15 @@ public class PlayerController : NetworkBehaviour
 	/// <summary>
 	/// 更新可能?
 	/// </summary>
-	public bool IsReadyUpdate(uint frame)
+	public bool IsReadyUpdate(byte frame)
 	{
-		for (int i = 0; i < m_Commands.Count; i++)
-		{
-			if (m_Commands[i].frame == frame)
-			{
-				return true;
-			}
-		}
-		return false;
+		return m_Commands.FindIndex(x => x.frame == frame) >= 0;
 	}
 
 	/// <summary>
 	/// コマンド実行
 	/// </summary>
-	private void ExecuteCommand(uint frame)
+	private void ExecuteCommand(byte frame)
 	{
 		// フレームのコマンドを実行
 		int index = m_Commands.FindIndex(x => x.frame == frame);
@@ -205,12 +202,19 @@ public class PlayerController : NetworkBehaviour
 	/// <summary>
 	/// コマンドを破棄
 	/// </summary>
-	public void RemoveCommand(uint frame)
+	public void RemoveCommand(ulong frame)
 	{
+		ushort maxByte = byte.MaxValue + 1;
+
 		for (int i = 0; i < m_Commands.Count; i++)
 		{
-			if (m_Commands[i].frame < frame)
+			if (m_Commands[i].frame + maxByte * m_CommandFrameResetCount < frame)
 			{
+				// フレームリセット回数カウント
+				if (m_Commands[i].frame == byte.MaxValue)
+				{
+					++m_CommandFrameResetCount;
+				}
 				m_Commands.RemoveAt(i--);
 			}
 			else
@@ -224,7 +228,7 @@ public class PlayerController : NetworkBehaviour
 	/// コマンド送信
 	/// </summary>
 	[Client]
-	private void SendCommand(CommandData command, uint frame)
+	private void SendCommand(CommandData command, byte frame)
 	{
 		command.frame = frame;
 

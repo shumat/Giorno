@@ -88,9 +88,9 @@ public class TRPlayer : PlayerBase
 	{
 		PlayerController.CommandData command = new PlayerController.CommandData();
 		command.type =  (byte)PlayerController.CommandType.TR_Move;
-		command.values = new int[2];
-		command.values[0] = targetGrid.x;
-		command.values[1] = targetGrid.y;
+		command.values = new sbyte[2];
+		command.values[0] = (sbyte)targetGrid.x;
+		command.values[1] = (sbyte)targetGrid.y;
 		SetNextCommand(command);
 	}
 
@@ -101,8 +101,8 @@ public class TRPlayer : PlayerBase
 	{
 		PlayerController.CommandData command = new PlayerController.CommandData();
 		command.type =  (byte)PlayerController.CommandType.TR_Rotate;
-		command.values = new int[1];
-		command.values[0] = (byte)(negative ? 1 : 0);
+		command.values = new sbyte[1];
+		command.values[0] = (sbyte)(negative ? 1 : 0);
 		SetNextCommand(command);
 	}
 

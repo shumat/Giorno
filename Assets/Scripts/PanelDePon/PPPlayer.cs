@@ -103,10 +103,10 @@ public class PPPlayer : PlayerBase
 	{
 		PlayerController.CommandData command = new PlayerController.CommandData();
 		command.type =  (byte)PlayerController.CommandType.PP_Swap;
-		command.values = new int[2];
+		command.values = new sbyte[2];
 		Vector2i grid = (Game as PPGame).PlayArea.GetBlockGrid(block);
-		command.values[0] = grid.y * PPGame.Config.PlayAreaWidth + grid.x;
-		command.values[1] = (int)dir;
+		command.values[0] = (sbyte)(grid.y * PPGame.Config.PlayAreaWidth + grid.x);
+		command.values[1] = (sbyte)dir;
 		SetNextCommand(command);
 	}
 

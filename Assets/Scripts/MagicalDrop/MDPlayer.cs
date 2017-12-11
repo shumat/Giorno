@@ -95,14 +95,14 @@ public class MDPlayer : PlayerBase
 					if (dif.y > 0 && playArea.IsValidPush())
 					{
 						// プッシュ
-						PushDrop(m_CurrentRow);
+						PushDrop((sbyte)m_CurrentRow);
 						m_IgnoreAction = true;
 					}
 					// 下
 					else if (dif.y <= 0 && playArea.IsValidPull(m_CurrentRow))
 					{
 						// プル
-						PullDrop(m_CurrentRow);
+						PullDrop((sbyte)m_CurrentRow);
 						m_IgnoreAction = true;
 					}
 				}
@@ -116,11 +116,11 @@ public class MDPlayer : PlayerBase
 	/// <summary>
 	/// プッシュ
 	/// </summary>
-	private void PushDrop(int row)
+	private void PushDrop(sbyte row)
 	{
 		PlayerController.CommandData command = new PlayerController.CommandData();
 		command.type =  (byte)PlayerController.CommandType.MD_Push;
-		command.values = new int[1];
+		command.values = new sbyte[1];
 		command.values[0] = row;
 		SetNextCommand(command);
 	}
@@ -128,11 +128,11 @@ public class MDPlayer : PlayerBase
 	/// <summary>
 	/// プル
 	/// </summary>
-	private void PullDrop(int row)
+	private void PullDrop(sbyte row)
 	{
 		PlayerController.CommandData command = new PlayerController.CommandData();
 		command.type =  (byte)PlayerController.CommandType.MD_Pull;
-		command.values = new int[1];
+		command.values = new sbyte[1];
 		command.values[0] = row;
 		SetNextCommand(command);
 	}
