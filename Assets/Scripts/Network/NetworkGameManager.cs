@@ -44,26 +44,6 @@ public class NetworkGameManager : NetworkManager
 	}
 
 	/// <summary>
-	/// 更新可能?
-	/// </summary>
-	public bool IsReadyUpdate(byte frame)
-	{
-		if (m_Players == null || m_Players.Count == 0)
-		{
-			return false;
-		}
-
-		foreach (PlayerController player in m_Players)
-		{
-			if (!player.IsReadyUpdate(frame))
-			{
-				return false;
-			}
-		}
-		return true;
-	}
-
-	/// <summary>
 	/// 全プレイヤー取得
 	/// </summary>
 	public PlayerController[] GetPlayers()
@@ -111,29 +91,6 @@ public class NetworkGameManager : NetworkManager
 			}
 		}
 		return bots.ToArray();
-	}
-
-	/// <summary>
-	/// 更新
-	/// </summary>
-	protected void LateUpdate()
-	{
-		// 古いコマンドを破棄
-		ulong? minFrame = null;
-		foreach (PlayerController player in m_Players)
-		{
-			if (minFrame == null || minFrame.Value > player.TotalFrameCount)
-			{
-				minFrame = player.TotalFrameCount;
-			}
-		}
-		if (minFrame != null && minFrame.Value > 0)
-		{
-			foreach (PlayerController player in m_Players)
-			{
-				player.RemoveCommand(minFrame.Value - 1);
-			}
-		}
 	}
 
 	/// <summary>

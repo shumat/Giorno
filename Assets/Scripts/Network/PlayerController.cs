@@ -12,14 +12,12 @@ public class PlayerController : NetworkBehaviour
 	{
 		public byte type;
 		public sbyte[] values;
-		public byte frame;
 		public byte damageLevel;
 
 		public void Clear()
 		{
 			type = 0;
 			values = null;
-			frame = 0;
 			damageLevel = 0;
 		}
 	}
@@ -62,17 +60,11 @@ public class PlayerController : NetworkBehaviour
 		Damage,
 	}
 
-	/// <summary> フレーム </summary>
-	public byte FrameCount { get; private set; }
-
-	/// <summary> 合計フレーム </summary>
-	public ulong TotalFrameCount { get; private set; }
-
 	/// <summary> コマンドリスト </summary>
 	private List<CommandData> m_Commands = new List<CommandData>();
 
-	/// <summary> コマンドのフレームをリセットした回数 </summary>
-	private uint m_CommandFrameResetCount = 0;
+	/// <summary> 破棄すべきコマンド数 </summary>
+	private int m_NeedsRemoveComandCount = 0;
 
 	/// <summary> ゲーム </summary>
 	public GameBase Game { get; private set; }
@@ -126,6 +118,15 @@ public class PlayerController : NetworkBehaviour
 	}
 
 	/// <summary>
+	/// 後の更新
+	/// </summary>
+	protected void LateUpdate()
+	{
+		// コマンドを破棄
+		RemoveCommand();
+	}
+
+	/// <summary>
 	/// 同期更新
 	/// </summary>
 	private void SyncUpdate()
@@ -146,92 +147,91 @@ public class PlayerController : NetworkBehaviour
 			CommandData command = Game.Player.Step();
 
 			// コマンド送信
-			SendCommand(command, FrameCount);
+			SendCommand(command);
 
 			// 即実行
-			ExecuteCommand(FrameCount);
+			ExecuteCommand(0);
 
 			// ゲーム更新
 			Game.LateStep();
-
-			++FrameCount;
-			++TotalFrameCount;
 		}
-		// 相手側の更新(同期待ちする)
+		// 相手側の更新
 		else
 		{
 			// フレーム更新
-			while (NetworkGameManager.Instance.IsReadyUpdate(FrameCount))
+			int index = 0;
+			while (IsValidCommand(index, false))
 			{
 				// ゲーム更新
 				Game.Step();
 
 				// コマンド実行
-				ExecuteCommand(FrameCount);
+				ExecuteCommand(index);
 
 				// ゲーム更新
 				Game.LateStep();
 
-				++FrameCount;
-				++TotalFrameCount;
+				++index;
 			}
 		}
 	}
 
 	/// <summary>
-	/// 更新可能?
+	/// コマンド有効?
 	/// </summary>
-	public bool IsReadyUpdate(byte frame)
+	public bool IsValidCommand(int index, bool checkSync)
 	{
-		return m_Commands.FindIndex(x => x.frame == frame) >= 0;
+		// ローカルプレイヤー
+		if (isLocalPlayer || !checkSync)
+		{
+			return index < m_Commands.Count;
+		}
+		// 複製プレイヤー
+		else
+		{
+			// ローカルプレイヤー以外のコマンド数をチェック
+			PlayerController[] players = NetworkGameManager.Instance.GetPlayers();
+			foreach (PlayerController player in players)
+			{
+				if (!player.isLocalPlayer && index >= player.m_Commands.Count)
+				{
+					return false;
+				}
+			}
+			return true;
+		}
 	}
 
 	/// <summary>
 	/// コマンド実行
 	/// </summary>
-	private void ExecuteCommand(byte frame)
+	private void ExecuteCommand(int index)
 	{
-		// フレームのコマンドを実行
-		int index = m_Commands.FindIndex(x => x.frame == frame);
-		if (index >= 0)
+		if (index >= 0 && index < m_Commands.Count)
 		{
 			Game.Player.ExecuteCommand(m_Commands[index]);
+			++m_NeedsRemoveComandCount;
 		}
 	}
 
 	/// <summary>
 	/// コマンドを破棄
 	/// </summary>
-	public void RemoveCommand(ulong frame)
+	public void RemoveCommand()
 	{
-		ushort maxByte = byte.MaxValue + 1;
-
-		for (int i = 0; i < m_Commands.Count; i++)
+		for (int i = 0; i < m_NeedsRemoveComandCount; i++)
 		{
-			if (m_Commands[i].frame + maxByte * m_CommandFrameResetCount < frame)
-			{
-				// フレームリセット回数カウント
-				if (m_Commands[i].frame == byte.MaxValue)
-				{
-					++m_CommandFrameResetCount;
-				}
-				m_Commands.RemoveAt(i--);
-			}
-			else
-			{
-				break;
-			}
+			m_Commands.RemoveAt(0);
 		}
+		m_NeedsRemoveComandCount = 0;
 	}
 
 	/// <summary>
 	/// コマンド送信
 	/// </summary>
 	[Client]
-	private void SendCommand(CommandData command, byte frame)
+	private void SendCommand(CommandData command)
 	{
-		command.frame = frame;
-
 		// 自分の分は自分で追加
 		m_Commands.Add(command);
 
@@ -245,8 +245,6 @@ public class PlayerController : NetworkBehaviour
 	[Command(channel=Channels.DefaultReliable)]
 	private void CmdSendCommand(CommandData command)
 	{
-		// サーバー
-
 		// 専用サーバー
 		if (isServer && !isClient)
 		{
@@ -262,8 +260,6 @@ public class PlayerController : NetworkBehaviour
 	[ClientRpc(channel=Channels.DefaultReliable)]
 	private void RpcRecieveCommand(CommandData command)
 	{
-		// クライアント
-
 		if (!isLocalPlayer)
 		{
 			m_Commands.Add(command);
