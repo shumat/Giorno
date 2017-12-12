@@ -130,12 +130,6 @@ public class TRPlayArea : MonoBehaviour
 				Debug.Log("Over");
 			}
 		}
-
-		// デバッグネクスト変更
-		if (Input.GetMouseButtonDown(1))
-		{
-			SetNextTetromino((m_NextTetrominoTypes[0] + 1) % m_Tetromino.NumType);
-		}
 	}
 
 	#region Tetromino
@@ -175,7 +169,8 @@ public class TRPlayArea : MonoBehaviour
 	/// </summary>
 	private int GetNextTetromino()
 	{
-		for (int i = 0; i < 5 - m_NextTetrominoTypes.Count; i++)
+		int count = 5 - m_NextTetrominoTypes.Count;
+		for (int i = 0; i < count; i++)
 		{
 			m_NextTetrominoTypes.Add(m_Game.Controller.SyncRand.Next(m_Tetromino.NumType));
 		}
