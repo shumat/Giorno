@@ -127,9 +127,15 @@ public class PlayerController : NetworkBehaviour
 	/// </summary>
 	protected void Update()
 	{
-		if (Game != null)
+		if (Game != null && Game.IsPlaying)
 		{
 			SyncUpdate();
+
+			// ゲームオーバーチェック
+			if (!IsClone && Game.IsOver())
+			{
+				CmdGameOver();
+			}
 		}
 	}
 
@@ -339,9 +345,27 @@ public class PlayerController : NetworkBehaviour
 	}
 
 	/// <summary>
+	/// ゲームオーバー送信
+	/// </summary>
+	[Command(channel=Channels.DefaultReliable)]
+	private void CmdGameOver()
+	{
+		RpcGameOver();
+	}
+
+	/// <summary>
+	/// ゲームオーバー受信
+	/// </summary>
+	[ClientRpc(channel=Channels.DefaultReliable)]
+	private void RpcGameOver()
+	{
+		Game.BeginOver();
+	}
+
+	/// <summary>
 	/// ゲーム開始
 	/// </summary>
-	public void BeginGame()
+	public void CreateGame()
 	{
 		GameObject obj = null;
 		Debug.Log(m_GameMode);
