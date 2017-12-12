@@ -735,7 +735,7 @@ public class TRPlayArea : MonoBehaviour
 
 	private void OnGUI()
 	{
-		if (m_Game.Controller.isLocalPlayer)
+		if (m_Game.Controller != null && m_Game.Controller.isLocalPlayer)
 		{
 			GUIStyle style = new GUIStyle();
 			GUIStyleState styleState = new GUIStyleState();

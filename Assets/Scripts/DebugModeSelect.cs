@@ -19,6 +19,12 @@ public class DebugModeSelect : MonoBehaviour
 		// ゲームモード送信
 		NetworkGameManager.Instance.LocalPlayer.CmdSetGameMode(gameMode);
 
+		PlayerController[] bots = NetworkGameManager.Instance.GetBots(true);
+		foreach (PlayerController bot in bots)
+		{
+			bot.CmdSetGameMode(gameMode);
+		}
+
 		// 同期待機開始
 		NetworkGameManager.Instance.StandbySync();
 

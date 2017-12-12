@@ -80,12 +80,12 @@ public class NetworkGameManager : NetworkManager
 	/// <summary>
 	/// ボット取得
 	/// </summary>
-	public PlayerController[] GetBots()
+	public PlayerController[] GetBots(bool controlledOnly = false)
 	{
 		List<PlayerController> bots = new List<PlayerController>();
 		foreach (var player in m_Players)
 		{
-			if (player.IsBot)
+			if (player.IsBot && (!controlledOnly || player.IsControlledBot))
 			{
 				bots.Add(player);
 			}
@@ -101,6 +101,12 @@ public class NetworkGameManager : NetworkManager
 		if (NetworkClient.active)
 		{
 			LocalPlayer.CmdStandbySync();
+		}
+
+		PlayerController[] bots = GetBots(true);
+		foreach (PlayerController bot in bots)
+		{
+			bot.CmdStandbySync();
 		}
 	}
 

@@ -37,7 +37,13 @@ public class PlayerBase : MonoBehaviour
 		}
 		else
 		{
-			Play();
+			if (!Game.Controller.IsBot)
+			{
+				Play();
+			}
+			else
+			{
+			}
 
 			// ダメージを追加
 			if (m_DamageQueue.Count > 0)
@@ -74,9 +80,32 @@ public class PlayerBase : MonoBehaviour
 	public virtual void ExecuteCommand(PlayerController.CommandData command){}
 
 	/// <summary>
+	/// ダメージ送信
+	/// </summary>
+	protected void SendDamage(byte level)
+	{
+		// ローカルプレイヤー
+		if (Game.Controller.isLocalPlayer)
+		{
+			// ボットにダメージ
+			PlayerController[] bots = NetworkGameManager.Instance.GetBots(true);
+			foreach (PlayerController bot in bots)
+			{
+				bot.Game.Player.AddDamage(level);
+			}
+		}
+		// 複製プレイヤー
+		else
+		{
+			// ローカルプレイヤーにダメージ
+			NetworkGameManager.Instance.LocalPlayer.Game.Player.AddDamage(level);
+		}
+	}
+
+	/// <summary>
 	/// ダメージイベント
 	/// </summary>
-	public void AddDamage(byte level)
+	private void AddDamage(byte level)
 	{
 		if (level > 0)
 		{

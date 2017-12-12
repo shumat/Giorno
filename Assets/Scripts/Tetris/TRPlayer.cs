@@ -154,12 +154,7 @@ public class TRPlayer : PlayerBase
 	/// </summary>
 	public void OnLineVanish(int count)
 	{
-		// 複製プレイヤーのみ
-		if (!Game.Controller.isLocalPlayer)
-		{
-			// ローカルプレイヤーにダメージ
-			NetworkGameManager.Instance.LocalPlayer.Game.Player.AddDamage((byte)count);
-		}
+		SendDamage((byte)count);
 	}
 
 	/// <summary>

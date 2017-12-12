@@ -198,12 +198,7 @@ public class MDPlayer : PlayerBase
 		//}
 		if (chainCount > 0)
 		{
-			// 複製プレイヤーのみ
-			if (!Game.Controller.isLocalPlayer)
-			{
-				// ローカルプレイヤーにダメージ
-				NetworkGameManager.Instance.LocalPlayer.Game.Player.AddDamage((byte)(chainCount - 1));
-			}
+			SendDamage((byte)(chainCount - 1));
 		}
 	}
 

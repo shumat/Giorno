@@ -98,6 +98,22 @@ public class PlayerController : NetworkBehaviour
 	}
 
 	/// <summary>
+	/// 自身が操作可能なボット
+	/// </summary>
+	public bool IsControlledBot
+	{
+		get { return NetworkServer.active && IsBot; }
+	}
+
+	/// <summary>
+	/// 複製プレイヤー
+	/// </summary>
+	public bool IsClone
+	{
+		get { return !isLocalPlayer && !IsControlledBot; }
+	}
+
+	/// <summary>
 	/// 開始
 	/// </summary>
 	protected void Start()
@@ -131,8 +147,8 @@ public class PlayerController : NetworkBehaviour
 	/// </summary>
 	private void SyncUpdate()
 	{
-		// 自身の更新
-		if (isLocalPlayer)
+		// ローカルプレイヤーかボット
+		if (!IsClone)
 		{
 			// ステップ実行
 			if (Input.GetKey(KeyCode.LeftControl) && !Input.GetKeyDown(KeyCode.Space))
@@ -155,7 +171,7 @@ public class PlayerController : NetworkBehaviour
 			// ゲーム更新
 			Game.LateStep();
 		}
-		// 相手側の更新
+		// 複製プレイヤー
 		else
 		{
 			// フレーム更新
@@ -260,7 +276,7 @@ public class PlayerController : NetworkBehaviour
 	[ClientRpc(channel=Channels.DefaultReliable)]
 	private void RpcRecieveCommand(CommandData command)
 	{
-		if (!isLocalPlayer)
+		if (IsClone)
 		{
 			m_Commands.Add(command);
 		}
@@ -271,7 +287,7 @@ public class PlayerController : NetworkBehaviour
 	/// </summary>
 	public void OnMatchSucceed()
 	{
-		if (NetworkClient.active && isLocalPlayer)
+		if (NetworkClient.active && !IsClone)
 		{
 			CmdRandomSeed((int)(Random.value * int.MaxValue));
 		}

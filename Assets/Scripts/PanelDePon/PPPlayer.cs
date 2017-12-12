@@ -39,11 +39,6 @@ public class PPPlayer : PlayerBase
 
 		PPPlayArea playArea = (Game as PPGame).PlayArea;
 
-		if (Input.GetKeyDown(KeyCode.D))
-		{
-			Game.Player.AddDamage((byte)PPGame.Config.GetChainDamageLevel(2));
-		}
-
 		// タッチした瞬間
 		if (InputManager.IsTouchDown())
 		{
@@ -165,12 +160,7 @@ public class PPPlayer : PlayerBase
 		//{
 		//	StartCoroutine(ChainAppeal(chainCount));
 		//}
-		// 複製プレイヤーのみ
-		if (!Game.Controller.isLocalPlayer)
-		{
-			// ローカルプレイヤーにダメージ
-			NetworkGameManager.Instance.LocalPlayer.Game.Player.AddDamage((byte)PPGame.Config.GetChainDamageLevel(chainCount));
-		}
+		SendDamage((byte)PPGame.Config.GetChainDamageLevel(chainCount));
 	}
 
 	/// <summary>
@@ -178,15 +168,10 @@ public class PPPlayer : PlayerBase
 	/// </summary>
 	public void OnVanishPanel(int count)
 	{
-		// 複製プレイヤーのみ
-		if (!Game.Controller.isLocalPlayer)
+		int[] levels = PPGame.Config.GetConcurrentDamageLevels(count);
+		for (int i = 0; i < levels.Length; i++)
 		{
-			// ローカルプレイヤーにダメージ
-			int[] levels = PPGame.Config.GetConcurrentDamageLevels(count);
-			for (int i = 0; i < levels.Length; i++)
-			{
-				NetworkGameManager.Instance.LocalPlayer.Game.Player.AddDamage((byte)(levels[i]));
-			}
+			SendDamage((byte)(levels[i]));
 		}
 	}
 

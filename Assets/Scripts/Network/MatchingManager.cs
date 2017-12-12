@@ -180,16 +180,17 @@ public class MatchingManager : MonoBehaviour
 			{
 				yield return null;
 			}
-			//// ボットを生成
-			//for (int i = NetworkGameManager.Instance.PlayerCount; i < NetworkGameManager.Instance.matchSize; i++)
-			//{
-			//	PlayerController bot = NetworkGameManager.Instance.SpawnBot();
-			//}
-			//// メンバーが揃うまで待機
-			//while (NetworkGameManager.Instance.PlayerCount < NetworkGameManager.Instance.matchSize)
-			//{
-			//	yield return null;
-			//}
+			// ボットを生成
+			for (int i = NetworkGameManager.Instance.PlayerCount; i < NetworkGameManager.Instance.matchSize; i++)
+			{
+				PlayerController bot = NetworkGameManager.Instance.SpawnBot();
+				bot.OnMatchSucceed();
+			}
+			// メンバーが揃うまで待機
+			while (NetworkGameManager.Instance.PlayerCount < NetworkGameManager.Instance.matchSize)
+			{
+				yield return null;
+			}
 		}
 
 		// マッチ成功イベント
