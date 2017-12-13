@@ -203,16 +203,13 @@ public class PPPlayer : PlayerBase
 	/// </summary>
 	private void OnGUI()
 	{
-		GUIStyle style = new GUIStyle();
-		GUIStyleState styleState = new GUIStyleState();
-		styleState.textColor = Color.white;
-		style.fontSize = 50;
-		style.normal = styleState;
-		int chainCount = (Game as PPGame).PlayArea.ChainCount;
-		if (chainCount > 0)
+		if (Game.Controller != null && Game.Controller.isLocalPlayer)
 		{
-			chainCount++;
+			int chainCount = (Game as PPGame).PlayArea.ChainCount;
+			if (chainCount > 0)
+			{
+				ScaledGUI.Label((chainCount + 1).ToString() + " Chain");
+			}
 		}
-		GUI.Label(new Rect(10, 100, 300, 100), chainCount.ToString() + " Chain", style);
 	}
 }

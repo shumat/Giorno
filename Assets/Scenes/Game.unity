@@ -298,13 +298,12 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 889199283}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cbef85c0d74ae6544ac7a9831bbf64e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   maxShowHistoryOnGUI: 0
-  GUIFontSize: 24
   path: Logs/log-{DATE}.txt
 --- !u!1 &1526547474
 GameObject:

@@ -248,16 +248,14 @@ public class MDPlayer : PlayerBase
 	/// </summary>
 	private void OnGUI()
 	{
-		GUIStyle style = new GUIStyle();
-		GUIStyleState styleState = new GUIStyleState();
-		styleState.textColor = Color.white;
-		style.fontSize = 50;
-		style.normal = styleState;
-		GUI.Label(new Rect(10, 100, 300, 100),
-			(Game as MDGame).PlayArea.ChainCount.ToString() + " Chain\n" +
-			"Chain Receive " + (Game as MDGame).PlayArea.ChainReceiveTime.ToString() + "\n" +
-			"IsValidPull " + (Game as MDGame).PlayArea.IsValidPull(m_CurrentRow) + "\n" +
-			"PulledDropCount " + (Game as MDGame).PlayArea.GetPulledDropCount() + "\n" +
-			"PushingDropCount " + (Game as MDGame).PlayArea.GetPushingDropCount() , style);
+		if (Game.Controller != null && Game.Controller.isLocalPlayer)
+		{
+			ScaledGUI.Label(
+				(Game as MDGame).PlayArea.ChainCount.ToString() + " Chain\n" +
+				"Chain Receive " + (Game as MDGame).PlayArea.ChainReceiveTime.ToString("0.00") + "\n" +
+				"IsValidPull " + (Game as MDGame).PlayArea.IsValidPull(m_CurrentRow) + "\n" +
+				"PulledDropCount " + (Game as MDGame).PlayArea.GetPulledDropCount() + "\n" +
+				"PushingDropCount " + (Game as MDGame).PlayArea.GetPushingDropCount());
+		}
 	}
 }

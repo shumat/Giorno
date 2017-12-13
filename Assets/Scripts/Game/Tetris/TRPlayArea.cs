@@ -732,12 +732,6 @@ public class TRPlayArea : MonoBehaviour
 	{
 		if (m_Game.Controller != null && m_Game.Controller.isLocalPlayer)
 		{
-			GUIStyle style = new GUIStyle();
-			GUIStyleState styleState = new GUIStyleState();
-			styleState.textColor = Color.white;
-			style.fontSize = 50;
-			style.normal = styleState;
-
 			string next = "";
 			if (m_NextTetrominoTypes.Count > 0)
 			{
@@ -752,7 +746,7 @@ public class TRPlayArea : MonoBehaviour
 					case 6: next = "O"; break;
 				}
 			}
-			GUI.Label(new Rect(0, 0, Screen.width, Screen.height), next, style);
+			ScaledGUI.Label(next);
 
 			/*
 			for (int y = 0; y < m_Lines.Count; y++)

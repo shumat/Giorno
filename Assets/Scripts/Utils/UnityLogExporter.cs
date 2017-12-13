@@ -10,12 +10,6 @@ public class UnityLogExporter : MonoBehaviour
 	/// <summary> 過去ログGUI表示数 </summary>
 	public int maxShowHistoryOnGUI = 0;
 
-	/// <summary> GUIフォントサイズ </summary>
-	public int GUIFontSize = 24;
-
-	/// <summary> GUIスタイル </summary>
-	private GUIStyle m_GUIStyle;
-
 	/// <summary> パス </summary>
 	public string path = "Logs/log-{DATE}.txt";
 
@@ -55,13 +49,6 @@ public class UnityLogExporter : MonoBehaviour
 		sw.Flush();
 		sw.Close();
 #endif
-
-		// GUIスタイル初期化
-		GUIStyleState styleState = new GUIStyleState();
-		styleState.textColor = Color.white;
-		m_GUIStyle = new GUIStyle();
-		m_GUIStyle.normal = styleState;
-		m_GUIStyle.fontSize = GUIFontSize;
 
 		// ログイベント追加
 		Application.logMessageReceived += OnLogMessage;
@@ -129,7 +116,7 @@ public class UnityLogExporter : MonoBehaviour
 			{
 				sb.Append(str);
 			}
-			GUI.Label(new Rect(0, 0, Screen.width, Screen.height), sb.ToString(), m_GUIStyle);
+			ScaledGUI.Label(sb.ToString(), TextAnchor.UpperLeft, Vector2.zero, Color.white, 24);
 		}
 	}
 }

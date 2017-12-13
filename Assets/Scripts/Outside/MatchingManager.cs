@@ -33,6 +33,28 @@ public class MatchingManager : MonoBehaviour
 		m_UseLocalNetwork = m_Menu.transform.Find("GameMode/UseLan").GetComponent<Toggle>().isOn;
 	}
 
+	protected void OnGUI()
+	{
+		string text = "";
+		if (NetworkGameManager.Instance.PlayerCount > 0)
+		{
+			if (NetworkServer.active)
+			{
+				text += "Match created\n";
+				text += "Waiting for player (" + NetworkGameManager.Instance.PlayerCount.ToString() + " / " + NetworkGameManager.Instance.matchSize.ToString() + ")\n";
+			}
+			else if (NetworkClient.active)
+			{
+				text += "Match joined\n";
+			}
+		}
+		else if (m_MatchingCoroutine != null)
+		{
+			text += "Finding...";
+		}
+		ScaledGUI.Label(text, TextAnchor.MiddleCenter);
+	}
+
 	#region Match
 
 	/// <summary>
@@ -107,6 +129,8 @@ public class MatchingManager : MonoBehaviour
 
 		// ゲーム開始
 		StartCoroutine(StartGame(true));
+
+		m_MatchingCoroutine = null;
 	}
 
 	/// <summary>
@@ -151,6 +175,8 @@ public class MatchingManager : MonoBehaviour
 
 		// ゲーム開始
 		StartCoroutine(StartGame(true));
+
+		m_MatchingCoroutine = null;
 	}
 
 	/// <summary>
@@ -258,6 +284,7 @@ public class MatchingManager : MonoBehaviour
 		if (m_MatchingCoroutine != null)
 		{
 			StopCoroutine(m_MatchingCoroutine);
+			m_MatchingCoroutine = null;
 		}
 
 		yield return NetworkGameManager.Instance.Disconnect();
