@@ -487,6 +487,14 @@ public class NetworkGameManager : NetworkManager
 	#endregion
 
 	/// <summary>
+	/// オフラインモード
+	/// </summary>
+	public bool IsOfflineMode
+	{
+		get { return networkPort == 0; }
+	}
+
+	/// <summary>
 	/// インスタンス
 	/// </summary>
 	public static NetworkGameManager Instance

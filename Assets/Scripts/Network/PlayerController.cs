@@ -72,12 +72,12 @@ public class PlayerController : NetworkBehaviour
 	/// <summary> シード同期乱数 </summary>
 	public System.Random SyncRand { get; private set; }
 
+	/// <summary> ゲーム終了した？ </summary>
+	public bool IsGameOver { get; private set; }
+
 	/// <summary> ゲームモード </summary>
 	[SyncVar]
 	private GameBase.GameMode m_GameMode = GameBase.GameMode.None;
-
-	/// <summary> ゲーム終了した？ </summary>
-	public bool IsGameOver { get; private set; }
 
 	/// <summary>
 	/// ゲームモード
@@ -381,6 +381,12 @@ public class PlayerController : NetworkBehaviour
 	[ClientRpc(channel=Channels.DefaultReliable)]
 	private void RpcGameOver(byte rank)
 	{
+		// オフラインでプレイヤーが1位になった際は処理しない
+		if (isLocalPlayer && NetworkGameManager.Instance.IsOfflineMode && rank == 1)
+		{
+			return;
+		}
+
 		IsGameOver = true;
 		Game.BeginOver(rank);
 	}

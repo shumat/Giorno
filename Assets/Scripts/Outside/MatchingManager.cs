@@ -139,8 +139,6 @@ public class MatchingManager : MonoBehaviour
 
 		NetworkGameManager nm = NetworkGameManager.Instance;
 
-		nm.networkPort = nm.DefaultNetworkPort;
-
 		// クライアントとして開始
 		nm.StartClient();
 		int count = m_RoomFindTryCount;
@@ -232,6 +230,8 @@ public class MatchingManager : MonoBehaviour
 	public void StartOnline()
 	{
 		m_Menu.SelectByName("Online");
+		
+		NetworkGameManager.Instance.networkPort = NetworkGameManager.Instance.DefaultNetworkPort;
 
 		if (m_UseLocalNetwork)
 		{
