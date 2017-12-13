@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class BattleManager : MonoBehaviour
 {
+	private bool m_IsGameEnd = false;
+
 	/// <summary>
 	/// 開始
 	/// </summary>
@@ -21,10 +23,37 @@ public class BattleManager : MonoBehaviour
 	}
 
 	/// <summary>
+	/// 更新
+	/// </summary>
+	protected void Update()
+	{
+		// ゲーム終了
+		if (!m_IsGameEnd)
+		{
+			m_IsGameEnd = true;
+			PlayerController[] players = NetworkGameManager.Instance.GetPlayers();
+			foreach (var player in players)
+			{
+				if (!player.IsGameOver)
+				{
+					m_IsGameEnd = false;
+					break;
+				}
+			}
+			if (m_IsGameEnd)
+			{
+				StartCoroutine(GameEnd());
+			}
+		}
+	}
+
+	/// <summary>
 	/// ゲーム開始
 	/// </summary>
 	private IEnumerator GameStart()
 	{
+		m_IsGameEnd = false;
+
 		yield return null;
 
 		PlayerController[] players = NetworkGameManager.Instance.GetPlayers();
@@ -48,6 +77,20 @@ public class BattleManager : MonoBehaviour
 		{
 			player.Game.BeginPlay();
 		}
+	}
+
+	/// <summary>
+	/// ゲーム終了
+	/// </summary>
+	private IEnumerator GameEnd()
+	{
+		m_IsGameEnd = true;
+		
+		yield return GameCoroutineStopWait();
+
+		GameManager.Instance.RequestUnloadScene("Battle");
+		GameManager.Instance.RequestAddScene("DebugModeSelect", true);
+		GameManager.Instance.ApplySceneRequests();
 	}
 
 	/// <summary>

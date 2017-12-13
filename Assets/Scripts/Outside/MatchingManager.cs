@@ -9,8 +9,8 @@ public class MatchingManager : MonoBehaviour
 	/// <summary> LANを使用 </summary>
 	private bool m_UseLocalNetwork = false;
 
-	/// <summary> ルーム検索時間 </summary>
-	private float m_RoomFindTime = 2f;
+	/// <summary> ルーム検索試行回数 </summary>
+	private int m_RoomFindTryCount = 2;
 
 	/// <summary> ルーム参加時に自分以外のプレイヤーを待つ時間 </summary>
 	private float m_OtherPlayerCloneWaitTime = 1f;
@@ -72,11 +72,9 @@ public class MatchingManager : MonoBehaviour
 			nm.StartMatchMaker();
 		}
 
-		float waitTime = m_RoomFindTime;
-		while (waitTime > 0f)
+		int count = m_RoomFindTryCount;
+		while (count > 0)
 		{
-			float startTime = Time.time;
-
 			// ルーム検索
 			yield return nm.FindMatch();
 
@@ -90,8 +88,7 @@ public class MatchingManager : MonoBehaviour
 			}
 
 			nm.StopFindMatch();
-
-			waitTime -= Time.time - startTime + Time.deltaTime;
+			--count;
 
 			yield return null;
 		}
@@ -111,7 +108,7 @@ public class MatchingManager : MonoBehaviour
 		}
 
 		// メンバーが揃うまで待機
-		waitTime = m_OtherPlayerCloneWaitTime;
+		float waitTime = m_OtherPlayerCloneWaitTime;
 		while (NetworkGameManager.Instance.PlayerCount < nm.matchSize)
 		{
 			// 自分以外のプレイヤーが一定時間いなければ退室
@@ -146,10 +143,10 @@ public class MatchingManager : MonoBehaviour
 
 		// クライアントとして開始
 		nm.StartClient();
-		float connectWait = m_RoomFindTime;
-		while (!nm.IsClientConnected() && connectWait > 0f)
+		int count = m_RoomFindTryCount;
+		while (!nm.IsClientConnected() && count > 0)
 		{
-			connectWait -= Time.deltaTime;
+			--count;
 			yield return null;
 		}
 		if (!nm.IsClientConnected())

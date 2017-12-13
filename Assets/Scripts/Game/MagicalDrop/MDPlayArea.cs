@@ -52,9 +52,6 @@ public class MDPlayArea : MonoBehaviour
 	/// <summary> 自動ライン生成待機時間 </summary>
 	private float m_AutoLineCreateWaitTime = 0f;
 
-	/// <summary> 更新有効 </summary>
-	private bool m_EnableUpdate = true;
-
 	private List<SpriteRenderer> m_BackLines = new List<SpriteRenderer>();
 	private List<Color> m_BackLineDefaultColors = new List<Color>();
 	
@@ -130,11 +127,6 @@ public class MDPlayArea : MonoBehaviour
 	/// </summary>
 	public void Step()
 	{
-		if (!m_EnableUpdate)
-		{
-			return;
-		}
-
 		// 連鎖受付時間更新
 		ChainReceiveTime -= GameManager.TimeStep;
 
@@ -151,11 +143,6 @@ public class MDPlayArea : MonoBehaviour
 		for (int i = 0; i < m_BackLines.Count; i++)
 		{
 			m_BackLines[i].color = m_BackLines[i].color + (m_BackLineDefaultColors[i] - m_BackLines[i].color) * GameManager.TimeStep * 5f;
-		}
-
-		// ゲームオーバー
-		if (IsLineOver())
-		{
 		}
 	}
 
@@ -226,16 +213,16 @@ public class MDPlayArea : MonoBehaviour
 	/// <summary>
 	/// ラインの範囲外までドロップがある?
 	/// </summary>
-	private bool IsLineOver()
+	public bool IsLineOver()
 	{
-		//for (int row = 0; row < m_Width; row++)
-		//{
-		//	MDDropBlock block = GetMostUnderFullBlock(row);
-		//	if (block.AttachedDrop != null && !block.AttachedDrop.IsValidVanish && block.AttachedDrop.CurrentState != MDDrop.State.Vanish && block.Position.y <= MinBlockPositionY)
-		//	{
-		//		return true;
-		//	}
-		//}
+		for (int row = 0; row < Width; row++)
+		{
+			MDDropBlock block = GetMostUnderFullBlock(row);
+			if (block != null && !block.AttachedDrop.IsValidVanish && block.AttachedDrop.CurrentState != MDDrop.State.Vanish && block.Position.y <= MinBlockPositionY)
+			{
+				return true;
+			}
+		}
 		return false;
 	}
 

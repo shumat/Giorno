@@ -63,4 +63,12 @@ public class PPGame : GameBase
 		// コルーチン停止
 		PlayArea.StopPlayingCoroutine();
 	}
+
+	/// <summary>
+	/// ゲームオーバー？
+	/// </summary>
+	public override bool IsOver()
+	{
+		return PlayArea.IsLineOver();
+	}
 }

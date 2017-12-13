@@ -14,6 +14,14 @@ public class DebugModeSelect : MonoBehaviour
 		//m_Character.Visible = true;
 	}
 
+	private void OnGUI()
+	{
+		if (m_StartGameCoroutine != null)
+		{
+			ScaledGUI.Label("Waiting for player", TextAnchor.UpperCenter);
+		}
+	}
+
 	private IEnumerator StartGame(GameBase.GameMode gameMode)
 	{
 		// ゲームモード送信

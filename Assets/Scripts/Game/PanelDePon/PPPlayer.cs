@@ -39,6 +39,11 @@ public class PPPlayer : PlayerBase
 
 		PPPlayArea playArea = (Game as PPGame).PlayArea;
 
+		if (Input.GetKeyDown(KeyCode.D))
+		{
+			(Game as PPGame).PlayArea.CreateDisturbPanel(2, 1);
+		}
+
 		// タッチした瞬間
 		if (InputManager.IsTouchDown())
 		{

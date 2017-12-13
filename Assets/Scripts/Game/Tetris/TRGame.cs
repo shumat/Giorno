@@ -57,4 +57,12 @@ public class TRGame : GameBase
 	{
 		PlayArea.Step();
 	}
+
+	/// <summary>
+	/// ゲームオーバー？
+	/// </summary>
+	public override bool IsOver()
+	{
+		return PlayArea.IsOver;
+	}
 }

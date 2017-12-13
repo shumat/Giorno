@@ -61,6 +61,9 @@ public class TRPlayArea : MonoBehaviour
 	/// <summary> テトロミノ位置を確定させる待機時間 </summary>
 	private float m_TetrominoAttachWaitTime = 0;
 
+	/// <summary> ゲームオーバー </summary>
+	public bool IsOver { get; private set; }
+
 	public GameObject PanelTemplate; // TODO: AssetBundle
 
 	/// <summary>
@@ -127,7 +130,7 @@ public class TRPlayArea : MonoBehaviour
 
 			if (!CreateNewTetromino())
 			{
-				Debug.Log("Over");
+				IsOver = true;
 			}
 		}
 	}

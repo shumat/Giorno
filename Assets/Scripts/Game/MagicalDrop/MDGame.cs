@@ -63,4 +63,12 @@ public class MDGame : GameBase
 		// コルーチン停止
 		PlayArea.StopPlayingCoroutine();
 	}
+
+	/// <summary>
+	/// ゲームオーバー？
+	/// </summary>
+	public override bool IsOver()
+	{
+		return PlayArea.IsLineOver();
+	}
 }

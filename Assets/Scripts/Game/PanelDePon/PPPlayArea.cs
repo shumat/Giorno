@@ -403,6 +403,41 @@ public class PPPlayArea : MonoBehaviour
 	{
 		m_ElevateWaitTime = 0;
 	}
+	
+	/// <summary>
+	/// ラインの範囲外までパネルがある?
+	/// </summary>
+	public bool IsLineOver()
+	{
+		// アクティブな最下段の行を算出
+		int bottomLine = 0;
+		for (int i = m_Lines.Count - 1; i >= 0; i--)
+		{
+			if (m_Lines[i][0].AttachedPanel != null && !m_Lines[i][0].AttachedPanel.Active)
+			{
+				++bottomLine;
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		// 画面上の最上段にパネルがあるか調べる
+		int areaTopLine = m_Lines.Count - (bottomLine + Height);
+		if (areaTopLine >= 0 && m_Lines.Count > areaTopLine)
+		{
+			PPPanelBlock[] line = m_Lines[areaTopLine];
+			foreach (PPPanelBlock block in line)
+			{
+				if (block.AttachedPanel != null)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 
 	/// <summary>
 	/// 新規行追加
@@ -530,7 +565,7 @@ public class PPPlayArea : MonoBehaviour
 	private void DeleteEmptyLine()
 	{
 		bool empty;
-		for (int i = 0; m_Lines.Count > Height; i++)
+		for (int i = 0; m_Lines.Count > Height + 1; i++)
 		{
 			empty = true;
 			foreach (PPPanelBlock block in m_Lines[i])
@@ -563,7 +598,7 @@ public class PPPlayArea : MonoBehaviour
 	public void CreateDisturbPanel(int width, int height)
 	{
 		// 空の行で埋める
-		int emptyLineCount = Height - m_Lines.Count;
+		int emptyLineCount = (Height + 1) - m_Lines.Count;
 		for (int i = 0; i < emptyLineCount; i++)
 		{
 			AddNewLine(true, true);

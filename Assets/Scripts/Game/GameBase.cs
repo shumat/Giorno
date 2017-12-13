@@ -23,7 +23,10 @@ public class GameBase : MonoBehaviour
 	public PlayerBase Player { get; protected set; }
 
 	/// <summary> 対戦中 </summary>
-	public bool IsPlaying { get; protected set; }
+	public bool IsPlaying { get; set; }
+
+	/// <summary> 順位 </summary>
+	private byte m_Rank = 0;
 
 	/// <summary> 再生中のコルーチン </summary>
 	private IEnumerator m_PlayingCoroutine = null;
@@ -75,26 +78,23 @@ public class GameBase : MonoBehaviour
 	/// <summary>
 	/// ゲームオーバー
 	/// </summary>
-	public void BeginOver()
+	public void BeginOver(byte rank)
 	{
 		if (m_PlayingCoroutine == null)
 		{
-			StartCoroutine(m_PlayingCoroutine = Over());
+			StartCoroutine(m_PlayingCoroutine = Over(rank));
 		}
 	}
 
 	/// <summary>
 	/// ゲームオーバー
 	/// </summary>
-	protected virtual IEnumerator Over()
+	protected virtual IEnumerator Over(byte rank)
 	{
 		IsPlaying = false;
+		m_Rank = rank;
 
-		yield return null;
-
-		GameManager.Instance.RequestUnloadScene("Battle");
-		GameManager.Instance.RequestAddScene("DebugModeSelect", true);
-		GameManager.Instance.ApplySceneRequests();
+		yield return new WaitForSeconds(3f);
 		
 		m_PlayingCoroutine = null;
 	}
@@ -123,5 +123,14 @@ public class GameBase : MonoBehaviour
 	public virtual bool IsOver()
 	{
 		return false;
+	}
+
+	private void OnGUI()
+	{
+		if (Controller.IsGameOver && Controller.isLocalPlayer)
+		{
+			string text = m_Rank == 1 ? "Win" : "Lose";
+			ScaledGUI.Label(text, TextAnchor.MiddleCenter, Vector2.zero, Color.white, 100);
+		}
 	}
 }

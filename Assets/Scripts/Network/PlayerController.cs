@@ -76,6 +76,9 @@ public class PlayerController : NetworkBehaviour
 	[SyncVar]
 	private GameBase.GameMode m_GameMode = GameBase.GameMode.None;
 
+	/// <summary> ゲーム終了した？ </summary>
+	public bool IsGameOver { get; private set; }
+
 	/// <summary>
 	/// ゲームモード
 	/// </summary>
@@ -134,6 +137,9 @@ public class PlayerController : NetworkBehaviour
 			// ゲームオーバーチェック
 			if (!IsClone && Game.IsOver())
 			{
+				// ローカルの更新停止
+				Game.IsPlaying = false;
+				// ゲームオーバー送信
 				CmdGameOver();
 			}
 		}
@@ -350,16 +356,33 @@ public class PlayerController : NetworkBehaviour
 	[Command(channel=Channels.DefaultReliable)]
 	private void CmdGameOver()
 	{
-		RpcGameOver();
+		PlayerController[] players = NetworkGameManager.Instance.GetPlayers();
+		List<PlayerController> playingPlayer = new List<PlayerController>();
+		foreach (PlayerController player in players)
+		{
+			if (!player.IsGameOver)
+			{
+				playingPlayer.Add(player);
+			}
+		}
+		IsGameOver = true;
+		RpcGameOver((byte)playingPlayer.Count);
+
+		// 2位なら1位も送信
+		if (playingPlayer.Count == 2)
+		{
+			playingPlayer.Find(x => x != this).RpcGameOver(1);
+		}
 	}
 
 	/// <summary>
 	/// ゲームオーバー受信
 	/// </summary>
 	[ClientRpc(channel=Channels.DefaultReliable)]
-	private void RpcGameOver()
+	private void RpcGameOver(byte rank)
 	{
-		Game.BeginOver();
+		IsGameOver = true;
+		Game.BeginOver(rank);
 	}
 
 	/// <summary>
@@ -367,6 +390,8 @@ public class PlayerController : NetworkBehaviour
 	/// </summary>
 	public void CreateGame()
 	{
+		IsGameOver = false;
+
 		GameObject obj = null;
 		Debug.Log(m_GameMode);
 		switch (m_GameMode)
