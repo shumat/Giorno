@@ -172,4 +172,18 @@ public class MDConfig : ScriptableObject
 	{
 		get { return m_DropPushSpeed; }
 	}
+
+	public byte GetChainDamageLevel(int chainCount)
+	{
+		if (chainCount > 0)
+		{
+			return (byte)(chainCount + 3 - 1);
+		}
+		return 0;
+	}
+
+	public int GetDamageLineCount(byte level)
+	{
+		return (int)level - 3;
+	}
 }

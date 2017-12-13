@@ -145,7 +145,11 @@ public class TRPlayer : PlayerBase
 		// ダメージ
 		if (command.damageLevel > 0)
 		{
-			(Game as TRGame).PlayArea.RequestAddLine((int)command.damageLevel);
+			int line = TRGame.Config.GetDamageLineCount(command.damageLevel);
+			if (line > 0)
+			{
+				(Game as TRGame).PlayArea.RequestAddLine(line);
+			}
 		}
 	}
 
@@ -154,7 +158,7 @@ public class TRPlayer : PlayerBase
 	/// </summary>
 	public void OnLineVanish(int count)
 	{
-		SendDamage((byte)count);
+		SendDamage(TRGame.Config.GetLineVanishDamageLevel(count));
 	}
 
 	/// <summary>

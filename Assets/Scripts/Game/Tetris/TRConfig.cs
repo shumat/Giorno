@@ -40,4 +40,18 @@ public class TRConfig : ScriptableObject
 	{
 		get { return m_GridSize; }
 	}
+
+	public byte GetLineVanishDamageLevel(int count)
+	{
+		if (count > 0)
+		{
+			return (byte)(count + 3);
+		}
+		return 0;
+	}
+
+	public int GetDamageLineCount(byte level)
+	{
+		return (int)level - 3;
+	}
 }
