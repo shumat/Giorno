@@ -127,7 +127,7 @@ public class GameBase : MonoBehaviour
 
 	private void OnGUI()
 	{
-		if (Controller.IsGameOver && Controller.isLocalPlayer)
+		if (Controller != null && Controller.IsGameOver && Controller.isLocalPlayer)
 		{
 			string text = m_Rank == 1 ? "Win" : "Lose";
 			ScaledGUI.Label(text, TextAnchor.MiddleCenter, Vector2.zero, Color.white, 100);
