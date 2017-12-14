@@ -26,11 +26,14 @@ public class DebugModeSelect : MonoBehaviour
 	{
 		// ゲームモード送信
 		NetworkGameManager.Instance.LocalPlayer.CmdSetGameMode(gameMode);
+		// 乱数シード送信
+		NetworkGameManager.Instance.LocalPlayer.CmdRandomSeed((int)(Random.value * int.MaxValue));
 
 		PlayerController[] bots = NetworkGameManager.Instance.GetBots(true);
 		foreach (PlayerController bot in bots)
 		{
 			bot.CmdSetGameMode(gameMode);
+			bot.CmdRandomSeed((int)(Random.value * int.MaxValue));
 		}
 
 		// 同期待機開始

@@ -204,8 +204,7 @@ public class MatchingManager : MonoBehaviour
 			// ボットを生成
 			for (int i = NetworkGameManager.Instance.PlayerCount; i < NetworkGameManager.Instance.matchSize; i++)
 			{
-				PlayerController bot = NetworkGameManager.Instance.SpawnBot();
-				bot.OnMatchSucceed();
+				NetworkGameManager.Instance.SpawnBot();
 			}
 			// メンバーが揃うまで待機
 			while (NetworkGameManager.Instance.PlayerCount < NetworkGameManager.Instance.matchSize)
@@ -213,9 +212,6 @@ public class MatchingManager : MonoBehaviour
 				yield return null;
 			}
 		}
-
-		// マッチ成功イベント
-		NetworkGameManager.Instance.LocalPlayer.OnMatchSucceed();
 
 		m_Menu.SelectByName(null);
 

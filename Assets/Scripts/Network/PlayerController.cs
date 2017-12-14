@@ -295,21 +295,10 @@ public class PlayerController : NetworkBehaviour
 	}
 
 	/// <summary>
-	/// マッチ成功イベント
-	/// </summary>
-	public void OnMatchSucceed()
-	{
-		if (NetworkClient.active && !IsClone)
-		{
-			CmdRandomSeed((int)(Random.value * int.MaxValue));
-		}
-	}
-
-	/// <summary>
 	/// 乱数シード送信
 	/// </summary>
 	[Command(channel=Channels.DefaultReliable)]
-	private void CmdRandomSeed(int seed)
+	public void CmdRandomSeed(int seed)
 	{
 		RpcRandomSeed(seed);
 	}
