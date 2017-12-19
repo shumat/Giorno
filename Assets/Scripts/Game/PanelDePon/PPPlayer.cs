@@ -41,7 +41,7 @@ public class PPPlayer : PlayerBase
 
 		if (Input.GetKeyDown(KeyCode.D))
 		{
-			(Game as PPGame).PlayArea.CreateDisturbPanel(2, 1);
+			(Game as PPGame).PlayArea.CreateDisturbPanel(6, 2);
 		}
 
 		// タッチした瞬間
@@ -62,9 +62,10 @@ public class PPPlayer : PlayerBase
 			// 入れ替え
 			else if (m_TouchedBlock != null)
 			{
-				// 移動先グリッド
-				Vector2i target = playArea.ConvertWorldToGrid(Camera.main.ScreenToWorldPoint(InputManager.GetTouchPosition()));
+				Vector3 worldTouchPos = Camera.main.ScreenToWorldPoint(InputManager.GetTouchPosition());
 
+				// 移動先グリッド
+				Vector2i target = playArea.ConvertWorldToGrid(worldTouchPos);
 				// 移動元グリッド
 				Vector2i current = playArea.GetBlockGrid(m_TouchedBlock);
 
@@ -90,7 +91,14 @@ public class PPPlayer : PlayerBase
 					}
 
 					// 交換
-					SwapPanel(m_TouchedBlock, dir);
+					PPPanelBlock targetBlock = playArea.GetBlock(target);
+					Vector3 distance = targetBlock != null ? targetBlock.Position - worldTouchPos : Vector3.zero;
+					if (targetBlock == null ||
+						((dir == PlayAreaBlock.Dir.Left || dir == PlayAreaBlock.Dir.Right) && Mathf.Abs(distance.x) < PPGame.Config.PanelSwapStartDistance) ||
+						((dir == PlayAreaBlock.Dir.Up || dir == PlayAreaBlock.Dir.Down) && Mathf.Abs(distance.y) < PPGame.Config.PanelSwapStartDistance))
+					{
+						SwapPanel(m_TouchedBlock, dir);
+					}
 				}
 			}
 		}

@@ -668,6 +668,11 @@ public class PPPlayArea : MonoBehaviour
 	/// </summary>
 	public PPPanelBlock GetBlock(Vector2i grid)
 	{
+		if (grid.y < 0 || grid.y >= m_Lines.Count || grid.x < 0 || grid.x >= m_Lines[grid.y].Length)
+		{
+			return null;
+		}
+
 		return m_Lines[grid.y][grid.x];
 	}
 

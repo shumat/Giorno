@@ -21,6 +21,7 @@ MonoBehaviour:
   m_ElevateStartTouchTime: 0.3
   m_PanelSwapStartSwipeDistance: 0.35
   m_PanelSwapDirThresholdScale: 0.8
+  m_PanelSwapStartDistance: 0.4
   m_PlayAreaHeight: 12
   m_PlayAreaWidth: 6
   m_PanelSize: 1.46

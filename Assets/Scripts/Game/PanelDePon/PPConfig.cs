@@ -98,6 +98,18 @@ public class PPConfig : ScriptableObject
 	{
 		get { return m_PanelSwapDirThresholdScale; }
 	}
+	
+	/// <summary> パネル入れ替えを開始するタッチ座標と対象パネルとの距離 </summary>
+	[SerializeField]
+	private float m_PanelSwapStartDistance = 0.4f;
+
+	/// <summary>
+	/// パネル入れ替えを開始するタッチ座標と対象パネルとの距離
+	/// </summary>
+	public float PanelSwapStartDistance
+	{
+		get { return m_PanelSwapStartDistance; }
+	}
 
 	[Header("PlayArea")]
 	
