@@ -6,9 +6,21 @@ using UnityEngine.Networking.Match;
 
 public class NetworkGameManager : NetworkManager
 {
+	/// <summary> ネットワークディスカバリー </summary>
+	public NetworkDiscovery Discovery { get; private set; }
+
+	/// <summary>
+	/// 開始
+	/// </summary>
 	protected void Start()
 	{
 		DefaultNetworkPort = networkPort;
+
+		Discovery = GetComponent<NetworkDiscovery>();
+		if (Discovery == null)
+		{
+			Discovery = gameObject.AddComponent<NetworkDiscovery>();
+		}
 	}
 
 	#region Player
@@ -381,6 +393,12 @@ public class NetworkGameManager : NetworkManager
 	/// </summary>
 	private IEnumerator Disconnecting()
 	{
+		// ディスカバリー停止
+		if (Discovery.isClient || Discovery.isServer)
+		{
+			Discovery.StopBroadcast();
+		}
+
 		// ルーム解散
 		if (IsCreatedMatch)
 		{

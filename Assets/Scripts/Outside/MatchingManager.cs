@@ -6,9 +6,6 @@ using UnityEngine.Networking;
 
 public class MatchingManager : MonoBehaviour
 {
-	/// <summary> LANを使用 </summary>
-	private bool m_UseLocalNetwork = false;
-
 	/// <summary> ルーム検索試行回数 </summary>
 	private int m_RoomFindTryCount = 2;
 
@@ -30,7 +27,6 @@ public class MatchingManager : MonoBehaviour
 	protected void Awake()
 	{
 		m_Menu = GameObject.Find("MatchingCanvas").transform.Find("Menu").GetComponent<ObjectSelector>();
-		m_UseLocalNetwork = m_Menu.transform.Find("GameMode/UseLan").GetComponent<Toggle>().isOn;
 	}
 
 	protected void OnGUI()
@@ -65,6 +61,7 @@ public class MatchingManager : MonoBehaviour
 		Debug.Log("Start global match");
 
 		NetworkGameManager nm = NetworkGameManager.Instance;
+		nm.networkPort = NetworkGameManager.Instance.DefaultNetworkPort;
 
 		// マッチ開始
 		if (nm.matchMaker == null)
@@ -131,55 +128,88 @@ public class MatchingManager : MonoBehaviour
 	}
 
 	/// <summary>
-	/// ローカルマッチング
+	/// ローカルサーバーとして接続
 	/// </summary>
-	public IEnumerator LocalMatching()
+	public IEnumerator ConnectLocalServer()
 	{
-		Debug.Log("Start local match");
+		Debug.Log("Start local server");
 
 		NetworkGameManager nm = NetworkGameManager.Instance;
+		nm.networkPort = nm.DefaultNetworkPort;
 
-		// クライアントとして開始
-		nm.StartClient();
-		int count = m_RoomFindTryCount;
-		while (!nm.IsClientConnected() && count > 0)
-		{
-			--count;
-			yield return null;
-		}
-		if (!nm.IsClientConnected())
-		{
-			nm.StopClient();
-		}
+		// 初期化
+		nm.Discovery.Initialize();
 
-		// クライアントとして開始できなければホストとして開始
-		if (!NetworkClient.active)
+		// サーバーとして開始
+		if (nm.Discovery.StartAsServer() && nm.StartHost() != null)
 		{
-			if (nm.StartHost() == null)
+			// メンバーが揃うまで待機
+			while (NetworkGameManager.Instance.PlayerCount < NetworkGameManager.Instance.matchSize)
 			{
-				StartCoroutine(m_MatchingCoroutine = LocalMatching());
-				yield break;
+				yield return null;
 			}
-		}
 
-		// メンバーが揃うまで待機
-		while (NetworkGameManager.Instance.PlayerCount < nm.matchSize)
+			nm.Discovery.StopBroadcast();
+
+			// ゲーム開始
+			StartCoroutine(StartGame(true));
+		}
+		else
 		{
-			yield return null;
+			m_MatchingCoroutine = null;
+			yield return CancelMatch();
 		}
-
-		// ゲーム開始
-		StartCoroutine(StartGame(true));
-
-		m_MatchingCoroutine = null;
 	}
 
 	/// <summary>
-	/// LAN使用切り替え
+	/// ローカルクライアントとして接続
 	/// </summary>
-	public void ToggleLocalNetworkUsing()
+	public IEnumerator ConnectLocalClient()
 	{
-		m_UseLocalNetwork = !m_UseLocalNetwork;
+		Debug.Log("Start local client");
+
+		NetworkGameManager nm = NetworkGameManager.Instance;
+		nm.networkPort = nm.DefaultNetworkPort;
+
+		// 初期化
+		nm.Discovery.Initialize();
+
+		// クライアントとして開始
+		if (nm.Discovery.StartAsClient())
+		{
+			// サーバー検索
+			while (nm.Discovery.broadcastsReceived == null || nm.Discovery.broadcastsReceived.Count == 0)
+			{
+				yield return null;
+			}
+
+			// アドレスを設定して開始
+			foreach (var results in nm.Discovery.broadcastsReceived)
+			{
+				string address = results.Value.serverAddress;
+				address = address.Substring(address.LastIndexOf(':') + 1);
+
+				nm.networkAddress = address;
+				nm.StartClient();
+				break;
+			}
+
+			// メンバーが揃うまで待機
+			while (NetworkGameManager.Instance.PlayerCount < NetworkGameManager.Instance.matchSize)
+			{
+				yield return null;
+			}
+
+			nm.Discovery.StopBroadcast();
+
+			// ゲーム開始
+			StartCoroutine(StartGame(true));
+		}
+		else
+		{
+			m_MatchingCoroutine = null;
+			yield return CancelMatch();
+		}
 	}
 
 	#endregion
@@ -226,17 +256,24 @@ public class MatchingManager : MonoBehaviour
 	public void StartOnline()
 	{
 		m_Menu.SelectByName("Online");
-		
-		NetworkGameManager.Instance.networkPort = NetworkGameManager.Instance.DefaultNetworkPort;
+		StartCoroutine(m_MatchingCoroutine = Matching());
+	}
 
-		if (m_UseLocalNetwork)
-		{
-			StartCoroutine(m_MatchingCoroutine = LocalMatching());
-		}
-		else
-		{
-			StartCoroutine(m_MatchingCoroutine = Matching());
-		}
+	/// <summary>
+	/// ローカルサーバーとして開始
+	/// </summary>
+	public void StartLocalServer()
+	{
+		m_Menu.SelectByName("Online");
+		StartCoroutine(m_MatchingCoroutine = ConnectLocalServer());
+	}
+	/// <summary>
+	/// ローカルクライアントとして開始
+	/// </summary>
+	public void StartLocalClient()
+	{
+		m_Menu.SelectByName("Online");
+		StartCoroutine(m_MatchingCoroutine = ConnectLocalClient());
 	}
 
 	/// <summary>
