@@ -6,9 +6,6 @@ using UnityEngine.Networking;
 
 public class MatchingManager : MonoBehaviour
 {
-	/// <summary> ルーム検索試行回数 </summary>
-	private int m_RoomFindTryCount = 2;
-
 	/// <summary> ルーム参加時に自分以外のプレイヤーを待つ時間 </summary>
 	private float m_OtherPlayerCloneWaitTime = 1f;
 
@@ -69,26 +66,10 @@ public class MatchingManager : MonoBehaviour
 			nm.StartMatchMaker();
 		}
 
-		int count = m_RoomFindTryCount;
-		while (count > 0)
-		{
-			// ルーム検索
-			yield return nm.FindMatch();
-
-			// ルーム参加
-			yield return nm.JoinMatch();
-
-			// 成功
-			if (nm.IsJoinedMatch)
-			{
-				break;
-			}
-
-			nm.StopFindMatch();
-			--count;
-
-			yield return null;
-		}
+		// ルーム検索
+		yield return nm.FindMatch();
+		// ルーム参加
+		yield return nm.JoinMatch();
 
 		// ルーム未参加ならルーム作成
 		if (!nm.IsJoinedMatch)
