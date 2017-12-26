@@ -178,10 +178,10 @@ public class MDPlayer : PlayerBase
 		}
 
 		// ダメージ
-		if (command.damageLevel > 0)
+		DamageTable.DamageData damage = GetDamageData((PlayerController.DamageType)command.damageType, command.damageValue);
+		if (damage != null)
 		{
-			int line = MDGame.Config.GetDamageLineCount(command.damageLevel);
-			for (int i = 0; i < line; i++)
+			for (int i = 0; i < (int)damage.MDLine; i++)
 			{
 				(Game as MDGame).PlayArea.AddNewLine();
 			}
@@ -193,7 +193,10 @@ public class MDPlayer : PlayerBase
 	/// </summary>
 	public void OnChainEnd(int chainCount)
 	{
-		SendDamage(MDGame.Config.GetChainDamageLevel(chainCount));
+		if (chainCount > 0)
+		{
+			SendDamage(PlayerController.DamageType.MD_Chain, (byte)chainCount);
+		}
 	}
 
 	/// <summary>

@@ -12,13 +12,15 @@ public class PlayerController : NetworkBehaviour
 	{
 		public byte type;
 		public sbyte[] values;
-		public byte damageLevel;
+		public byte damageType;
+		public byte damageValue;
 
 		public void Clear()
 		{
 			type = 0;
 			values = null;
-			damageLevel = 0;
+			damageType = 0;
+			damageValue = 0;
 		}
 	}
 
@@ -39,6 +41,21 @@ public class PlayerController : NetworkBehaviour
 		TR_Move,
 		TR_Rotate,
 		TR_Hold,
+	}
+
+	/// <summary>
+	/// ダメージタイプ
+	/// </summary>
+	public enum DamageType
+	{
+		None,
+
+		MD_Chain,
+
+		PP_Chain,
+		PP_Vanish,
+
+		TR_Vanish,
 	}
 
 	/// <summary>
@@ -388,7 +405,6 @@ public class PlayerController : NetworkBehaviour
 		IsGameOver = false;
 
 		GameObject obj = null;
-		Debug.Log(m_GameMode);
 		switch (m_GameMode)
 		{
 			case GameBase.GameMode.MagicalDrop:

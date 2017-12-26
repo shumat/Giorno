@@ -1,0 +1,100 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da66dd7724f283647a303115b08068f1, type: 3}
+  m_Name: MDDamageTable
+  m_EditorClassIdentifier: 
+  m_Table:
+  - thresholdValue: 2
+    MDLine: 0.5
+    TRLine: 0.33
+    PPDisturb:
+    - width: 3
+      height: 1
+      count: 1
+  - thresholdValue: 3
+    MDLine: 1
+    TRLine: 0.66
+    PPDisturb:
+    - width: 5
+      height: 1
+      count: 1
+  - thresholdValue: 4
+    MDLine: 1.5
+    TRLine: 1
+    PPDisturb:
+    - width: 6
+      height: 1
+      count: 1
+  - thresholdValue: 5
+    MDLine: 2
+    TRLine: 1.33
+    PPDisturb:
+    - width: 6
+      height: 1
+      count: 1
+    - width: 3
+      height: 1
+      count: 1
+  - thresholdValue: 6
+    MDLine: 2.5
+    TRLine: 1.66
+    PPDisturb:
+    - width: 6
+      height: 2
+      count: 1
+  - thresholdValue: 7
+    MDLine: 3
+    TRLine: 2
+    PPDisturb:
+    - width: 6
+      height: 2
+      count: 1
+    - width: 3
+      height: 1
+      count: 1
+  - thresholdValue: 8
+    MDLine: 3.5
+    TRLine: 2.33
+    PPDisturb:
+    - width: 6
+      height: 3
+      count: 1
+  - thresholdValue: 9
+    MDLine: 4
+    TRLine: 2.66
+    PPDisturb:
+    - width: 6
+      height: 3
+      count: 1
+    - width: 4
+      height: 1
+      count: 1
+  - thresholdValue: 10
+    MDLine: 4.5
+    TRLine: 3
+    PPDisturb:
+    - width: 6
+      height: 4
+      count: 1
+  - thresholdValue: 11
+    MDLine: 5
+    TRLine: 3.5
+    PPDisturb:
+    - width: 6
+      height: 5
+      count: 1
+  - thresholdValue: 12
+    MDLine: 6
+    TRLine: 4
+    PPDisturb:
+    - width: 6
+      height: 6
+      count: 1

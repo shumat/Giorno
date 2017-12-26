@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Tetris/GameConfig")]
+[CreateAssetMenu(menuName = "Giorno/Tetris Config")]
 public class TRConfig : ScriptableObject
 {
 	[Header("Game")]
@@ -41,17 +41,26 @@ public class TRConfig : ScriptableObject
 		get { return m_GridSize; }
 	}
 
-	public byte GetLineVanishDamageLevel(int count)
-	{
-		if (count > 0)
-		{
-			return (byte)(count + 3);
-		}
-		return 0;
-	}
+	[Header("Damage")]
 
-	public int GetDamageLineCount(byte level)
+	/// <summary> ダメージテーブル </summary>
+	[SerializeField]
+	private DamageTable m_DamageTable = null;
+
+	/// <summary>
+	/// ダメージデータ取得
+	/// </summary>
+	public DamageTable.DamageData GetDamageData(byte damageValue)
 	{
-		return (int)level - 3;
+		int index = -1;
+		for (int i = m_DamageTable.Data.Count - 1; i >= 0; i--)
+		{
+			if (damageValue >= m_DamageTable.Data[i].thresholdValue)
+			{
+				index = i;
+				break;
+			}
+		}
+		return index >= 0 ? m_DamageTable.Data[index] : null;
 	}
 }

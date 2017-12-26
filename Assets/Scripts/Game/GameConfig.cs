@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Jorno/GameConfig")]
+[CreateAssetMenu(menuName = "Giorno/Config")]
 public class GameConfig : ScriptableObject
 {
 }

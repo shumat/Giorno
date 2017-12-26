@@ -157,10 +157,16 @@ public class PPPlayer : PlayerBase
 		}
 
 		// ダメージ
-		if (command.damageLevel > 0)
+		DamageTable.DamageData damage = GetDamageData((PlayerController.DamageType)command.damageType, command.damageValue);
+		if (damage != null)
 		{
-			Vector2i size = PPGame.Config.GetDisturbanceSize((byte)command.damageLevel);
-			(Game as PPGame).PlayArea.CreateDisturbPanel(size.x, size.y);
+			foreach (var disturbData in damage.PPDisturb)
+			{
+				for (int i = 0; i < disturbData.count; i++)
+				{
+					(Game as PPGame).PlayArea.CreateDisturbPanel(disturbData.width, disturbData.height);
+				}
+			}
 		}
 	}
 
@@ -173,7 +179,10 @@ public class PPPlayer : PlayerBase
 		//{
 		//	StartCoroutine(ChainAppeal(chainCount));
 		//}
-		SendDamage((byte)PPGame.Config.GetChainDamageLevel(chainCount));
+		if (chainCount > 0)
+		{
+			SendDamage(PlayerController.DamageType.PP_Chain, (byte)chainCount);
+		}
 	}
 
 	/// <summary>
@@ -181,10 +190,9 @@ public class PPPlayer : PlayerBase
 	/// </summary>
 	public void OnVanishPanel(int count)
 	{
-		int[] levels = PPGame.Config.GetConcurrentDamageLevels(count);
-		for (int i = 0; i < levels.Length; i++)
+		if (count > 0)
 		{
-			SendDamage((byte)(levels[i]));
+			SendDamage(PlayerController.DamageType.PP_Vanish, (byte)count);
 		}
 	}
 

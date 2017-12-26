@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "MagicalDrop/GameConfig")]
+[CreateAssetMenu(menuName = "Giorno/MagicalDrop Config")]
 public class MDConfig : ScriptableObject
 {
 	[Header("Game")]
@@ -173,17 +173,26 @@ public class MDConfig : ScriptableObject
 		get { return m_DropPushSpeed; }
 	}
 
-	public byte GetChainDamageLevel(int chainCount)
-	{
-		if (chainCount > 0)
-		{
-			return (byte)(chainCount + 3 - 1);
-		}
-		return 0;
-	}
+	[Header("Damage")]
 
-	public int GetDamageLineCount(byte level)
+	/// <summary> ダメージテーブル </summary>
+	[SerializeField]
+	private DamageTable m_DamageTable = null;
+
+	/// <summary>
+	/// ダメージデータ取得
+	/// </summary>
+	public DamageTable.DamageData GetDamageData(byte damageValue)
 	{
-		return (int)level - 3;
+		int index = -1;
+		for (int i = m_DamageTable.Data.Count - 1; i >= 0; i--)
+		{
+			if (damageValue >= m_DamageTable.Data[i].thresholdValue)
+			{
+				index = i;
+				break;
+			}
+		}
+		return index >= 0 ? m_DamageTable.Data[index] : null;
 	}
 }

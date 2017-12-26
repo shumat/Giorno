@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Panel de PON/GameConfig")]
+[CreateAssetMenu(menuName = "Giorno/Panel de PON Config")]
 public class PPConfig : ScriptableObject
 {
 	[Header("Game")]
@@ -195,54 +195,47 @@ public class PPConfig : ScriptableObject
 		get { return m_PanelDissolveDelay; }
 	}
 
-	public int GetChainDamageLevel(int count)
+	[Header("Damage")]
+
+	/// <summary> 連鎖ダメージテーブル </summary>
+	[SerializeField]
+	private DamageTable m_ChainDamageTable = null;
+
+	/// <summary>
+	/// 連鎖ダメージデータ取得
+	/// </summary>
+	public DamageTable.DamageData GetChainDamageData(byte damageValue)
 	{
-		if (count > 1)
+		int index = -1;
+		for (int i = m_ChainDamageTable.Data.Count - 1; i >= 0; i--)
 		{
-			return count - 1 + 3;
+			if (damageValue >= m_ChainDamageTable.Data[i].thresholdValue)
+			{
+				index = i;
+				break;
+			}
 		}
-		else
-		{
-			return 0;
-		}
+		return index >= 0 ? m_ChainDamageTable.Data[index] : null;
 	}
 
-	public int[] GetConcurrentDamageLevels(int count)
-	{
-		List<int> levels = new List<int>();
-		if (count >= 4)
-		{
-			if (count <= 7)
-			{
-				levels.Add(count - 3);
-			}
-			else if (count <= 12)
-			{
-				levels.Add((count / 2) - 3);
-				levels.Add((count / 2) - 3);
-			}
-			else if (count == 13)
-			{
-				for (int i = 0; i < 3; i++)
-				{
-					levels.Add(5);
-				}
-			}
-		}
-		return levels.ToArray();
-	}
+	/// <summary> 消滅ダメージテーブル </summary>
+	[SerializeField]
+	private DamageTable m_VanishDamageTable = null;
 
-	public Vector2i GetDisturbanceSize(int level)
+	/// <summary>
+	/// 消滅ダメージデータ取得
+	/// </summary>
+	public DamageTable.DamageData GetVanishDamageData(byte damageValue)
 	{
-		Vector2i size =new Vector2i(PlayAreaWidth, 1);
-		if (level <= 4)
+		int index = -1;
+		for (int i = m_VanishDamageTable.Data.Count - 1; i >= 0; i--)
 		{
-			size.x = 2 + level;
+			if (damageValue >= m_VanishDamageTable.Data[i].thresholdValue)
+			{
+				index = i;
+				break;
+			}
 		}
-		else
-		{
-			size.y = level - 3;
-		}
-		return size;
+		return index >= 0 ? m_VanishDamageTable.Data[index] : null;
 	}
 }

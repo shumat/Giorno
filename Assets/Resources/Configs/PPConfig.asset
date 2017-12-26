@@ -30,3 +30,6 @@ MonoBehaviour:
   m_PanelSwapSpeed: 30
   m_PanelVanishDelay: 0.2
   m_PanelDissolveDelay: 0.2
+  m_ChainDamageTable: {fileID: 11400000, guid: 5f1a8395626f4f649a812927147883e6, type: 2}
+  m_VanishDamageTable: {fileID: 11400000, guid: dc8ddd426f4a766409789b2e786b40c3,
+    type: 2}

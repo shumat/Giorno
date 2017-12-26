@@ -141,15 +141,12 @@ public class TRPlayer : PlayerBase
 				(Game as TRGame).PlayArea.Hold();
 				break;
 		}
-
+		
 		// ダメージ
-		if (command.damageLevel > 0)
+		DamageTable.DamageData damage = GetDamageData((PlayerController.DamageType)command.damageType, command.damageValue);
+		if (damage != null)
 		{
-			int line = TRGame.Config.GetDamageLineCount(command.damageLevel);
-			if (line > 0)
-			{
-				(Game as TRGame).PlayArea.RequestAddLine(line);
-			}
+			(Game as TRGame).PlayArea.RequestAddLine((int)damage.TRLine);
 		}
 	}
 
@@ -158,7 +155,10 @@ public class TRPlayer : PlayerBase
 	/// </summary>
 	public void OnLineVanish(int count)
 	{
-		SendDamage(TRGame.Config.GetLineVanishDamageLevel(count));
+		if (count > 0)
+		{
+			SendDamage(PlayerController.DamageType.TR_Vanish, (byte)count);
+		}
 	}
 
 	/// <summary>

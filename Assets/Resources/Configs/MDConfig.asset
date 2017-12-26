@@ -28,3 +28,4 @@ MonoBehaviour:
   m_DropPullSpeed: 100
   m_DropPullMaxAngle: 45
   m_DropPushSpeed: 80
+  m_DamageTable: {fileID: 11400000, guid: b5f25f34a59fdef46a4255012bdd599a, type: 2}

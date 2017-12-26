@@ -14,3 +14,4 @@ MonoBehaviour:
   m_PlayAreaHeight: 20
   m_PlayAreaWidth: 10
   m_GridSize: 0.875
+  m_DamageTable: {fileID: 11400000, guid: 02a4d8af50a13f14b92bdb9f8e28fdde, type: 2}
