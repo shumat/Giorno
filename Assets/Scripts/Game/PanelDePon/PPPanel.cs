@@ -303,45 +303,35 @@ public class PPPanel : MonoBehaviour
 		startBlock.Detach();
 		
 		PPPanelBlock curBlock = startBlock;
-		PPPanelBlock fallTarget = null;
-		float distance = 0;
+		PPPanelBlock fallTarget = startBlock;
+		PPPanelBlock bottom = null;
 
 		while (true)
 		{
-			// 今いるブロックを算出(上側)
-			while (!curBlock.TestInsideY(transform.position.y, m_Area.BlockSize) && curBlock.GetLink(PlayAreaBlock.Dir.Down) != null)
+			// 移動
+			Vector3 move = -Vector3.up * GameManager.TimeStep * PPGame.Config.PanelFallSpeed;
+			transform.position += move;
+
+			// 移動先を超えたら移動先を再設定
+			if (transform.position.y <= fallTarget.Position.y)
 			{
-				PPPanelBlock bottom = curBlock.GetLink(PlayAreaBlock.Dir.Down) as PPPanelBlock;
-				if (bottom.AttachedPanel == null)
+				curBlock = fallTarget;
+
+				bottom = curBlock.GetLink(PlayAreaBlock.Dir.Down) as PPPanelBlock;
+				if (bottom != null && bottom.AttachedPanel == null)
 				{
-					curBlock = bottom;
+					fallTarget = bottom;
 				}
 				else
 				{
+					transform.position = curBlock.Position;
 					break;
 				}
 			}
 
-			// 落下地点の再計算
-			fallTarget = curBlock.GetMostUnderEmptyBlock();
-			distance = Mathf.Abs(fallTarget.Position.y - transform.position.y);
-
-			// 移動
-			Vector3 move = -Vector3.up * GameManager.TimeStep * PPGame.Config.PanelFallSpeed;
-			transform.position += move;
-			distance -= move.magnitude;
-
-			// 移動完了
-			if (distance < 0)
-			{
-				transform.position = fallTarget.Position;
-				break;
-			}
-
 			yield return null;
 		}
-
-		StopFall(fallTarget);
+		StopFall(curBlock);
 	}
 
 	/// <summary>
